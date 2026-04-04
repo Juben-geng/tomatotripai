@@ -1,0 +1,1064 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>🍅 番茄旅行AI助手 - OTA实时比价</title>
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --p:#FF6B35;--p2:#E55A2B;--a:#00C9A7;
+  --s:#1A3A4A;--bg:#F8F9FA;--t:#1A1A2E;
+  --g:#6B7280;--b:rgba(26,58,74,0.1);
+  --r:#E53935;--gr:#2E7D32;
+}
+body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--t);height:100vh;overflow:hidden}
+
+/* === 顶部导航 === */
+.topbar{
+  height:60px;background:#fff;border-bottom:1px solid var(--b);
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 24px;position:fixed;top:0;left:0;right:0;z-index:100;
+}
+.logo{display:flex;align-items:center;gap:8px;font-size:20px;font-weight:700;color:var(--p);text-decoration:none;cursor:pointer}
+.logo-icon{width:36px;height:36px;background:linear-gradient(135deg,var(--p),var(--a));border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:20px}
+.topnav{display:flex;gap:6px}
+.navbtn{padding:8px 16px;border:none;background:0;border-radius:8px;cursor:pointer;font-weight:500;font-size:14px;color:var(--g);transition:all 0.2s;text-decoration:none;display:inline-flex;align-items:center}
+.navbtn:hover{background:#f5f5f5;color:var(--t)}
+.navbtn.active{background:var(--p);color:#fff}
+.topright{display:flex;align-items:center;gap:12px}
+.skill-badge{padding:6px 12px;border-radius:20px;font-size:12px;font-weight:600;cursor:default}
+.skill-badge.ready{background:#E8F5E9;color:#2E7D32}
+.skill-badge.loading{background:#FFF3E0;color:#E65100;animation:pulse 1.5s infinite}
+.skill-badge.error{background:#FFEBEE;color:#C62828}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:0.6}}
+
+/* === 主布局 === */
+.main{display:grid;grid-template-columns:300px 1fr;height:calc(100vh - 60px);margin-top:60px}
+
+/* === 左侧边栏 === */
+.sidebar{background:#fff;border-right:1px solid var(--b);display:flex;flex-direction:column;overflow:hidden}
+.sidebar-head{padding:16px;border-bottom:1px solid var(--b);display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.sidebar-title{font-weight:600;font-size:14px;display:flex;align-items:center;gap:8px}
+.sb-toggle{width:28px;height:28px;border:1px solid var(--b);border-radius:6px;background:#fff;cursor:pointer;font-size:12px;display:flex;align-items:center;justify-content:center;transition:all 0.2s}
+.sb-toggle:hover{background:var(--p);color:#fff;border-color:var(--p)}
+.sidebar.collapsed{width:48px;overflow:hidden}
+.sidebar.collapsed .sidebar-head *:not(.sb-toggle){display:none}
+.sidebar.collapsed .sb-toggle{position:absolute;left:8px}
+.sidebar.collapsed .chat-history-list *{display:none}
+.sidebar.collapsed .chat-history-list .sb-toggle{display:flex}
+
+.chat-history-list{flex:1;overflow-y:auto;padding:8px}
+.ch-empty{text-align:center;color:var(--g);font-size:13px;padding:20px 0}
+.ch-item{padding:10px;border-radius:8px;cursor:pointer;margin-bottom:4px;transition:all 0.2s;position:relative}
+.ch-item:hover{background:#f5f5f5}
+.ch-item.active{background:linear-gradient(135deg,var(--p),var(--p2));color:#fff}
+.ch-item.active .ch-time{color:rgba(255,255,255,0.7)}
+.ch-time{font-size:10px;color:var(--g);margin-bottom:3px}
+.ch-title{font-size:13px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;cursor:text}
+.ch-actions{position:absolute;right:4px;top:50%;transform:translateY(-50%);display:none;gap:4px}
+.ch-item:hover .ch-actions{display:flex}
+.ch-act{width:20px;height:20px;border-radius:4px;border:1px solid var(--b);background:#fff;cursor:pointer;font-size:10px;display:flex;align-items:center;justify-content:center;position:relative;z-index:1}
+.ch-item.active .ch-act{background:rgba(255,255,255,0.2);border-color:rgba(255,255,255,0.3);color:#fff}
+
+/* 工具栏侧边 */
+.tools-panel{padding:16px;border-top:1px solid var(--b);flex-shrink:0}
+.tools-title{font-size:12px;color:var(--g);margin-bottom:8px;font-weight:600}
+.tools-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tool-card{padding:10px;background:#f8f9fa;border-radius:8px;cursor:pointer;transition:all 0.2s;text-align:center;border:1.5px solid transparent}
+.tool-card:hover{border-color:var(--p);background:#fff}
+.tool-card.active{border-color:var(--a);background:#E0F7FA}
+.tool-icon{font-size:20px;margin-bottom:4px}
+.tool-name{font-size:11px;color:var(--g)}
+
+/* === 主内容区 === */
+.content-area{flex:1;display:flex;flex-direction:column;overflow:hidden}
+
+/* 聊天消息区 */
+.messages{flex:1;overflow-y:auto;padding:20px;background:#fafafa}
+.msg{margin-bottom:16px;animation:msgIn 0.3s ease-out}
+@keyframes msgIn{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.msg.user{text-align:right}
+.bubble{display:inline-block;padding:12px 18px;border-radius:16px;max-width:80%;font-size:14px;line-height:1.6;text-align:left}
+.bubble.user{background:var(--p);color:#fff;border-bottom-right-radius:4px}
+.bubble.ai{background:#fff;color:var(--t);border-bottom-left-radius:4px;box-shadow:0 2px 10px rgba(0,0,0,0.06);text-align:left}
+.bubble.ai-deep{background:linear-gradient(135deg,#1A3A4A,#2D5A6B);color:#fff;border-radius:20px}
+
+/* 提示卡片 */
+.tip-card{background:#FFF9F5;border-left:4px solid var(--p);padding:14px 18px;border-radius:0 12px 12px 0;margin-bottom:16px;font-size:13px;color:#666}
+.tip-card strong{color:var(--p)}
+.tip-card em{color:var(--p2);font-style:normal}
+
+/* 加载动画 */
+.loading-box{text-align:center;padding:40px 20px}
+.loading-tomato{font-size:48px;animation:bounceTomato 1s infinite}
+@keyframes bounceTomato{0%,100%{transform:translateY(0) rotate(-5deg)}50%{transform:translateY(-12px) rotate(5deg)}}
+.loading-text{color:var(--p);font-weight:600;margin-top:12px;font-size:14px}
+
+/* === OTA 结果卡片 === */
+.ota-panel{background:#fff;border-radius:20px;overflow:hidden;box-shadow:0 4px 20px rgba(0,0,0,0.08);margin-bottom:16px}
+.ota-head{padding:16px 20px;background:linear-gradient(135deg,var(--p),var(--a));color:#fff;display:flex;align-items:center;justify-content:space-between}
+.ota-title-row{display:flex;align-items:center;gap:10px}
+.ota-title{font-weight:700;font-size:16px}
+.ota-sub{font-size:12px;opacity:0.8}
+.ota-count-badge{padding:6px 14px;background:rgba(255,255,255,0.2);border-radius:20px;font-size:12px;font-weight:600}
+.ota-meta{padding:12px 20px;background:#f8f9fa;border-bottom:1px solid #eee;font-size:13px;color:var(--g);display:flex;gap:20px}
+.ota-meta strong{color:var(--t)}
+.ota-platforms{display:flex;gap:16px;padding:12px 20px;border-bottom:1px solid #f0f0f0}
+.platform-chip{padding:6px 14px;border-radius:20px;font-size:12px;font-weight:600;cursor:pointer;border:1.5px solid transparent;transition:all 0.2s}
+.platform-chip:hover,.platform-chip.active{border-color:currentColor}
+.platform-chip.tuniu{color:#FF6B35;background:rgba(255,107,53,0.08)}
+.platform-chip.tuniu.active{background:#FF6B35;color:#fff}
+.platform-chip.fliggy{color:#E67E00;background:rgba(230,126,0,0.08)}
+.platform-chip.fliggy.active{background:#E67E00;color:#fff}
+.platform-chip.all{color:#666;background:#f5f5f5}
+.platform-chip.all.active{background:#666;color:#fff}
+
+.hotels-list{padding:8px 12px;max-height:500px;overflow-y:auto}
+.hotel-card{background:#fff;border-radius:14px;padding:14px;margin-bottom:10px;box-shadow:0 2px 8px rgba(0,0,0,0.05);border-left:4px solid #ddd;transition:all 0.2s;cursor:pointer;position:relative}
+.hotel-card:hover{box-shadow:0 4px 16px rgba(0,0,0,0.1);transform:translateY(-1px)}
+.hotel-card.best{border-left-color:#FF6B35;background:linear-gradient(90deg,#FFF9F5,#fff 80%)}
+.hotel-card.tuniu{border-left-color:#FF6B35}
+.hotel-card.fliggy{border-left-color:#E67E00}
+.hotel-card-top{display:flex;align-items:center;gap:10px;margin-bottom:10px}
+.hotel-rank{width:28px;height:28px;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:12px;font-weight:700;flex-shrink:0;color:#fff}
+.hotel-rank.gold{background:linear-gradient(135deg,#FFD700,#FFA500)}
+.hotel-rank.num{background:#ddd;color:#666}
+.hotel-rank.best{background:var(--p);font-size:14px}
+.hotel-name{font-weight:600;font-size:14px;color:var(--t);flex:1;min-width:0}
+.hotel-name-text{white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.src-badge{padding:3px 8px;border-radius:6px;font-size:10px;font-weight:700;color:#fff;flex-shrink:0}
+.src-badge.t{background:#FF6B35}
+.src-badge.f{background:#E67E00}
+.hotel-card-body{display:flex;gap:12px;align-items:center}
+.hotel-pic{width:72px;height:54px;border-radius:8px;object-fit:cover;background:#f5f5f5;flex-shrink:0}
+.hotel-pic.hidden{display:none}
+.hotel-details{flex:1;min-width:0}
+.hotel-addr{font-size:12px;color:#999;margin-bottom:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.hotel-tags{display:flex;gap:4px;flex-wrap:wrap}
+.hotel-tag{font-size:10px;padding:2px 6px;background:#f5f5f5;border-radius:4px;color:#666}
+.hotel-tag.best{background:#FFF0EB;color:var(--p);font-weight:600}
+.hotel-right{text-align:right;flex-shrink:0}
+.hotel-price{font-size:24px;font-weight:700;line-height:1}
+.hotel-price.low{color:var(--gr)}
+.hotel-price.medium{color:#E67E00}
+.hotel-price.high{color:var(--r)}
+.hotel-price.luxury{color:#8E24AA}
+.hotel-unit{font-size:11px;color:#999;margin-top:2px}
+.hotel-score{font-size:11px;color:var(--a);font-weight:600;margin-top:4px}
+
+.hotel-actions{display:flex;gap:8px;margin-top:10px;padding-top:10px;border-top:1px solid #f0f0f0}
+.hotel-btn{flex:1;padding:8px;border-radius:8px;border:none;cursor:pointer;font-size:13px;font-weight:600;transition:all 0.2s;text-decoration:none;text-align:center;display:inline-block}
+.hotel-btn.book{background:var(--p);color:#fff}
+.hotel-btn.book:hover{background:var(--p2)}
+.hotel-btn.copy{background:#f5f5f5;color:#666;border:1px solid #eee}
+.hotel-btn.copy:hover{background:var(--p);color:#fff;border-color:var(--p)}
+
+.ota-actions{padding:14px 20px;background:#f8f9fa;border-top:1px solid #eee;display:flex;gap:8px;flex-wrap:wrap}
+.ota-act-btn{padding:8px 16px;background:#fff;border:1.5px solid #eee;border-radius:20px;font-size:13px;cursor:pointer;transition:all 0.2s;font-weight:500;display:flex;align-items:center;gap:6px}
+.ota-act-btn:hover{background:var(--p);color:#fff;border-color:var(--p)}
+.ota-act-btn.f{background:var(--a);color:#fff;border-color:var(--a)}
+
+/* === 飞书链接面板 === */
+.feishu-panel{background:#fff;border-radius:16px;padding:16px 20px;margin-bottom:16px;border:1.5px solid #E8F5E9}
+.feishu-head{display:flex;align-items:center;gap:10px;margin-bottom:12px}
+.feishu-icon{width:32px;height:32px;background:#00C9A7;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px}
+.feishu-title{font-weight:700;font-size:15px;color:#1A1A2E}
+.feishu-desc{font-size:13px;color:var(--g);margin-bottom:12px}
+.feishu-btns{display:flex;gap:8px;flex-wrap:wrap}
+.f-btn{padding:10px 18px;background:#E8F5E9;color:#2E7D32;border:none;border-radius:10px;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;text-decoration:none;display:inline-flex;align-items:center;gap:6px}
+.f-btn:hover{background:#2E7D32;color:#fff}
+
+/* === 输入区域 === */
+.input-area{padding:16px 20px;background:#fff;border-top:1px solid var(--b);flex-shrink:0}
+.input-toolbar{display:flex;gap:6px;margin-bottom:10px}
+.tool-btn{width:34px;height:34px;border-radius:8px;background:#f5f5f5;border:none;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:14px;transition:all 0.2s;position:relative}
+.tool-btn:hover{background:var(--p);color:#fff}
+.tool-btn input{display:none;position:absolute;opacity:0;width:100%;height:100%;cursor:pointer}
+.quick-btns{display:flex;flex-wrap:wrap;gap:6px;margin-bottom:10px}
+.quick-btn{padding:5px 12px;background:#f5f5f5;border:1px solid #eee;border-radius:16px;font-size:12px;cursor:pointer;transition:all 0.2s}
+.quick-btn:hover{background:var(--p);color:#fff;border-color:var(--p)}
+.input-row{display:flex;gap:10px;align-items:flex-end}
+.input-box{flex:1;min-width:0;position:relative}
+.chat-text{flex:1;width:100%;padding:12px 16px;border:2px solid #eee;border-radius:16px;font-size:14px;resize:none;min-height:48px;max-height:200px;font-family:inherit;line-height:1.5;background:#fff;transition:border-color 0.2s;outline:none}
+.chat-text:focus{border-color:var(--p)}
+.send-btn{width:48px;height:48px;border-radius:50%;background:var(--p);color:#fff;border:none;cursor:pointer;font-size:18px;flex-shrink:0;transition:all 0.2s;display:flex;align-items:center;justify-content:center}
+.send-btn:hover{background:var(--p2);transform:scale(1.05)}
+.send-btn:disabled{background:#ccc;cursor:not-allowed;transform:none}
+
+/* 模式切换 */
+.mode-bar{display:flex;gap:4px;margin-bottom:10px}
+.mode-btn{padding:6px 14px;border:1.5px solid #eee;border-radius:20px;background:#fff;font-size:12px;cursor:pointer;transition:all 0.2s;font-weight:500;color:#666}
+.mode-btn.active{background:var(--p);color:#fff;border-color:var(--p)}
+
+/* === 快捷面板 === */
+.quick-panel{display:none;flex-direction:column;gap:12px;padding:16px 20px;background:#f8f9fa;border-top:1px solid var(--b)}
+.quick-panel.show{display:flex}
+.qp-title{font-weight:600;font-size:14px;color:var(--t)}
+.qp-grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(200px,1fr));gap:10px}
+.qp-card{background:#fff;padding:14px;border-radius:12px;cursor:pointer;transition:all 0.2s;border:1.5px solid transparent}
+.qp-card:hover{border-color:var(--p);transform:translateY(-2px)}
+.qp-card-name{font-weight:600;font-size:14px;margin-bottom:4px}
+.qp-card-desc{font-size:12px;color:var(--g)}
+
+/* === 飞猪价格趋势 === */
+.price-trend{background:#fff;border-radius:16px;padding:16px 20px;margin-bottom:16px}
+.trend-title{font-weight:600;font-size:14px;margin-bottom:12px;display:flex;align-items:center;gap:8px}
+.trend-chart{display:flex;align-items:flex-end;gap:8px;height:80px}
+.trend-bar{flex:1;background:linear-gradient(to top,var(--p),var(--a));border-radius:4px 4px 0 0;min-height:8px;transition:height 0.5s ease;position:relative;cursor:pointer}
+.trend-bar:hover{opacity:0.8}
+.trend-bar::after{content:attr(data-label);position:absolute;bottom:-20px;left:50%;transform:translateX(-50%);font-size:10px;color:var(--g);white-space:nowrap}
+.trend-info{margin-top:24px;font-size:13px;color:var(--g);display:flex;gap:16px}
+.trend-info span strong{color:var(--p)}
+
+/* === 底部状态 === */
+.status-bar{height:32px;background:#fff;border-top:1px solid var(--b);display:flex;align-items:center;padding:0 16px;gap:16px;font-size:12px;color:var(--g);flex-shrink:0}
+.status-dot{width:6px;height:6px;border-radius:50%}
+.status-dot.ok{background:var(--gr)}
+.status-dot.warn{background:#E67E00}
+.status-dot.err{background:var(--r)}
+
+/* 每日价格表格 */
+.daily-prices-table{width:100%;border-collapse:collapse;margin-top:12px;font-size:13px}
+.daily-prices-table th{background:#f5f5f5;padding:8px 12px;text-align:left;font-weight:600;color:var(--g);border-bottom:2px solid #eee}
+.daily-prices-table td{padding:8px 12px;border-bottom:1px solid #f0f0f0}
+.daily-prices-table tr:hover td{background:#fafafa}
+.daily-prices-table .best-row td{background:#FFF9F5;font-weight:600}
+
+/* 工具提示 */
+.tooltip{position:relative}
+.tooltip::after{content:attr(data-tip);position:absolute;bottom:100%;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:4px 8px;border-radius:4px;font-size:11px;white-space:nowrap;display:none}
+.tooltip:hover::after{display:block}
+
+/* 无数据 */
+.empty-state{text-align:center;padding:60px 20px;color:var(--g)}
+.empty-icon{font-size:56px;margin-bottom:16px}
+.empty-title{font-size:18px;font-weight:600;margin-bottom:8px;color:var(--t)}
+.empty-desc{font-size:14px}
+</style>
+</head>
+<body>
+
+<!-- 顶部导航 -->
+<header class="topbar">
+  <div class="logo" onclick="location.href='index.html'">
+    <div class="logo-icon">🍅</div>
+    <span>番茄旅行AI</span>
+  </div>
+  <nav class="topnav">
+    <a href="index-full.html" class="navbtn">🏢 供应商</a>
+    <a href="ai-assistant-ota.html" class="navbtn active">🤖 AI助手+OTA</a>
+    <a href="hotel-price-comparison.html" class="navbtn" style="padding:8px 16px;background:linear-gradient(135deg,#FF6B35,#E67E00);color:#fff;border-radius:8px;font-weight:600">🏨 酒店比价</a>
+    <a href="analytics.html" class="navbtn">📊 数据分析</a>
+  </nav>
+  <div class="topright">
+    <span class="skill-badge" id="skillBadge">🎯 检查OTA技能...</span>
+    <a href="index.html" class="navbtn" style="border:1px solid var(--b)">← 返回首页</a>
+  </div>
+</header>
+
+<!-- 主布局 -->
+<div class="main">
+  
+  <!-- 左侧边栏 -->
+  <aside class="sidebar" id="sidebar">
+    <div class="sidebar-head">
+      <span class="sidebar-title">📋 对话历史</span>
+      <button class="sb-toggle" onclick="toggleSidebar()" title="收起">☰</button>
+    </div>
+    <div class="chat-history-list" id="chatHistoryList">
+      <div class="ch-empty">暂无历史记录</div>
+    </div>
+    
+    <!-- 快捷工具 -->
+    <div class="tools-panel">
+      <div class="tools-title">⚡ 快捷工具</div>
+      <div class="tools-grid">
+        <div class="tool-card" onclick="useTool('hotel')" title="酒店比价">
+          <div class="tool-icon">🏨</div>
+          <div class="tool-name">酒店比价</div>
+        </div>
+        <div class="tool-card" onclick="useTool('flight')" title="机票查询">
+          <div class="tool-icon">✈️</div>
+          <div class="tool-name">机票查询</div>
+        </div>
+        <div class="tool-card" onclick="useTool('feishu')" title="飞书同步">
+          <div class="tool-icon">📊</div>
+          <div class="tool-name">飞书同步</div>
+        </div>
+        <div class="tool-card" onclick="useTool('trend')" title="价格趋势">
+          <div class="tool-icon">📈</div>
+          <div class="tool-name">价格趋势</div>
+        </div>
+      </div>
+    </div>
+  </aside>
+
+  <!-- 主内容 -->
+  <div class="content-area">
+    
+    <!-- 聊天消息区 -->
+    <div class="messages" id="messages">
+      
+      <!-- 欢迎消息 -->
+      <div class="tip-card">
+        <strong>💡 使用说明：</strong>输入酒店查询需求，AI将自动调用<strong>OTA技能</strong>查询
+        <span style="color:#FF6B35;font-weight:700">途牛+飞猪</span>双平台实时价格<br>
+        <em>示例："查三亚天域酒店4月11-13号价格"</em> 或 <em>"普吉岛希尔顿多少钱"</em>
+      </div>
+
+      <div class="msg ai">
+        <div class="bubble ai-deep">
+          👋 你好！我是<strong>番茄AI助手</strong>，已集成OTA实时比价技能！<br><br>
+          <span style="opacity:0.9">🍅 输入目的地，我来帮你比价：</span><br>
+          <div style="margin-top:10px;font-size:13px;opacity:0.8">
+            🏨 <strong>查酒店</strong> — 途牛+飞猪双平台实时比价<br>
+            📊 <strong>价格趋势</strong> — 未来7天价格走势<br>
+            📋 <strong>生成报价单</strong> — 一键整理比价结果<br>
+            📊 <strong>同步飞书</strong> — 自动写入飞书多维表格<br>
+            ✈️ <strong>查机票</strong> — 航班价格对比
+          </div>
+          <br>请告诉我你想查询哪个城市的酒店？
+        </div>
+      </div>
+    </div>
+
+    <!-- 快捷面板 -->
+    <div class="quick-panel" id="quickPanel">
+      <div class="qp-title">🗺️ 热门目的地</div>
+      <div class="qp-grid">
+        <div class="qp-card" onclick="fillAndSearch('三亚', '三亚')">
+          <div class="qp-card-name">🏝️ 三亚</div>
+          <div class="qp-card-desc">热带海滨 · 度假首选</div>
+        </div>
+        <div class="qp-card" onclick="fillAndSearch('普吉岛', '普吉岛')">
+          <div class="qp-card-name">🌴 普吉岛</div>
+          <div class="qp-card-desc">泰国海岛 · 性价比高</div>
+        </div>
+        <div class="qp-card" onclick="fillAndSearch('巴厘岛', '巴厘岛')">
+          <div class="qp-card-name">🏖️ 巴厘岛</div>
+          <div class="qp-card-desc">印尼海岛 · 蜜月圣地</div>
+        </div>
+        <div class="qp-card" onclick="fillAndSearch('新加坡', '新加坡')">
+          <div class="qp-card-name">🏙️ 新加坡</div>
+          <div class="qp-card-desc">花园城市 · 亲子首选</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- 输入区域 -->
+    <div class="input-area">
+      <!-- 模式切换 -->
+      <div class="mode-bar">
+        <button class="mode-btn active" id="modeSmart" onclick="setMode('smart',this)">🧠 智能模式</button>
+        <button class="mode-btn" id="modeFast" onclick="setMode('fast',this)">⚡ 快速模式</button>
+        <button class="mode-btn" id="modeSave" onclick="setMode('save',this)">💰 省钱模式</button>
+      </div>
+      
+      <!-- 工具栏 -->
+      <div class="input-toolbar">
+        <label class="tool-btn" title="图片">
+          📷<input type="file" accept="image/*" onchange="handleFile(this)">
+        </label>
+        <label class="tool-btn" title="附件">
+          📎<input type="file" onchange="handleFile(this)">
+        </label>
+        <button class="tool-btn tooltip" data-tip="快捷目的地" onclick="toggleQuickPanel()">🗺️</button>
+        <button class="tool-btn tooltip" data-tip="每日价格查询" onclick="showDailyPrices()">📅</button>
+      </div>
+      
+      <!-- 快捷目的地 -->
+      <div class="quick-btns">
+        <span class="quick-btn" onclick="fillQuick('查三亚天域酒店价格')">🏨 三亚</span>
+        <span class="quick-btn" onclick="fillQuick('普吉岛希尔顿多少钱')">🌴 普吉岛</span>
+        <span class="quick-btn" onclick="fillQuick('巴厘岛宝格丽酒店')">🏖️ 巴厘岛</span>
+        <span class="quick-btn" onclick="fillQuick('新加坡金沙酒店')">🏙️ 新加坡</span>
+        <span class="quick-btn" onclick="fillQuick('马尔代夫度假村价格')">🛫 马尔代夫</span>
+      </div>
+      
+      <!-- 输入框 -->
+      <div class="input-row">
+        <div class="input-box">
+          <textarea class="chat-text" id="chatInput" rows="1" placeholder="输入酒店查询需求，如：查三亚天域酒店4月11号价格..." onkeydown="onInputKey(event)" oninput="autoResize(this)"></textarea>
+        </div>
+        <button class="send-btn" id="sendBtn" onclick="sendMessage()">➤</button>
+      </div>
+    </div>
+    
+    <!-- 状态栏 -->
+    <div class="status-bar">
+      <span class="status-dot ok" id="statusDot"></span>
+      <span id="statusText">🍅 番茄旅行OTA服务 · 途牛+飞猪双平台</span>
+      <span style="margin-left:auto">飞猪CLI: <span id="flyaiStatus">检查中...</span></span>
+    </div>
+  </div>
+</div>
+
+<script>
+// ==================== 配置 ====================
+const API = 'http://localhost:3000';
+const currentMode = { mode: 'smart' };
+let chatHistory = [];
+let currentHotels = [];
+let currentQuery = {};
+let isLoading = false;
+
+// ==================== 初始化 ====================
+document.addEventListener('DOMContentLoaded', () => {
+  loadHistory();
+  checkAPIService();
+  checkFlyaiStatus();
+  autoResize(document.getElementById('chatInput'));
+});
+
+function autoResize(el) {
+  el.style.height = 'auto';
+  el.style.height = Math.min(el.scrollHeight, 200) + 'px';
+}
+
+function onInputKey(e) {
+  if (e.key === 'Enter' && !e.shiftKey) {
+    e.preventDefault();
+    sendMessage();
+  }
+}
+
+// ==================== 服务检查 ====================
+async function checkAPIService() {
+  const badge = document.getElementById('skillBadge');
+  const dot = document.getElementById('statusDot');
+  const statusText = document.getElementById('statusText');
+  
+  try {
+    const res = await fetch(`${API}/health`, { method: 'GET', mode: 'no-cors' });
+    badge.className = 'skill-badge ready';
+    badge.textContent = '🎯 OTA技能就绪';
+    dot.className = 'status-dot ok';
+    statusText.textContent = '🍅 番茄旅行OTA服务 · 在线';
+  } catch (e) {
+    badge.className = 'skill-badge error';
+    badge.textContent = '⚠️ OTA服务未启动';
+    dot.className = 'status-dot err';
+    statusText.textContent = '⚠️ 请运行 hotel-api-server.js 启动服务';
+  }
+}
+
+async function checkFlyaiStatus() {
+  const el = document.getElementById('flyaiStatus');
+  try {
+    const res = await fetch(`${API}/health`);
+    const data = await res.json();
+    el.textContent = data.flyai === 'available' ? '✅ 已连接' : '❌ 未安装（使用模拟数据）';
+  } catch (e) {
+    el.textContent = '❌ 服务离线';
+  }
+}
+
+// ==================== 解析查询 ====================
+function parseHotelQuery(msg) {
+  const q = { dest: '', hotelName: '', checkIn: '', checkOut: '', days: 2, isHotelQuery: false };
+  
+  const dests = ['三亚', '普吉岛', '巴厘岛', '新加坡', '曼谷', '东京', '马尔代夫', '沙巴', '苏梅岛', '大阪', '京都', '台北', '香港', '悉尼', '巴黎', '伦敦'];
+  for (const d of dests) {
+    if (msg.includes(d)) { q.dest = d; break; }
+  }
+  
+  if (q.dest) {
+    const after = msg.split(q.dest)[1] || '';
+    const hotelMatch = after.match(/([^\d\s,，。,，]+?(?:酒店|希尔顿|度假|民宿|宾馆|公寓))/);
+    if (hotelMatch) q.hotelName = hotelMatch[1].replace(/[，,、\s]/g, '').trim();
+  }
+  
+  const datePattern = /(\d{1,2})[月\-/](\d{1,2})/g;
+  const dates = [];
+  let m;
+  while ((m = datePattern.exec(msg)) !== null) {
+    dates.push(`2026-${m[1].padStart(2,'0')}-${m[2].padStart(2,'0')}`);
+  }
+  
+  const fullDate = msg.match(/(\d{4})[年\-/](\d{1,2})[月\-/](\d{1,2})/);
+  if (fullDate) {
+    dates.unshift(`${fullDate[1]}-${fullDate[2].padStart(2,'0')}-${fullDate[3].padStart(2,'0')}`);
+  }
+  
+  if (dates.length >= 2) {
+    q.checkIn = dates[0]; q.checkOut = dates[1];
+  } else if (dates.length === 1) {
+    q.checkIn = dates[0];
+    const d = new Date(dates[0]); d.setDate(d.getDate() + 2);
+    q.checkOut = d.toISOString().slice(0,10);
+  } else {
+    const t = new Date(); t.setDate(t.getDate() + 7);
+    const c = new Date(t); c.setDate(c.getDate() + 2);
+    q.checkIn = t.toISOString().slice(0,10);
+    q.checkOut = c.toISOString().slice(0,10);
+  }
+
+  const hotelKw = ['查','酒店','价格','多少钱','预订','订'];
+  q.isHotelQuery = hotelKw.some(k => msg.includes(k));
+  q.days = Math.round((new Date(q.checkOut) - new Date(q.checkIn)) / 86400000);
+
+  return q;
+}
+
+// ==================== 价格颜色 ====================
+function getPriceColor(price) {
+  if (price <= 500) return { cls: 'low', label: '🟢 经济' };
+  if (price <= 1500) return { cls: 'medium', label: '🟠 舒适' };
+  if (price <= 3000) return { cls: 'high', label: '🔴 高档' };
+  return { cls: 'luxury', label: '🟣 豪华' };
+}
+
+// ==================== 发送消息 ====================
+async function sendMessage() {
+  const input = document.getElementById('chatInput');
+  const msg = input.value.trim();
+  if (!msg || isLoading) return;
+
+  isLoading = true;
+  document.getElementById('sendBtn').disabled = true;
+  input.value = '';
+  input.style.height = 'auto';
+
+  addMsg(msg, 'user');
+  addToHistory(msg);
+
+  const query = parseHotelQuery(msg);
+
+  if (query.isHotelQuery) {
+    showLoading();
+    try {
+      currentQuery = query;
+      const data = await callOTA(query);
+      currentHotels = data.data?.hotels || [];
+      const flyaiOK = data.meta?.flyaiSuccess;
+      const tnCount = data.meta?.tuniuCount || 0;
+      const fyCount = data.meta?.flyaiCount || 0;
+
+      const subMsg = document.getElementById('messages').lastElementChild;
+      if (subMsg) subMsg.remove();
+
+      renderOTAResult(currentHotels, query, { flyaiOK, tnCount, fyCount });
+    } catch (e) {
+      removeLoading();
+      addMsg('查询失败: ' + e.message + '\n\n请确保API服务已启动，或部署到线上环境(Vercel+Supabase)', 'ai');
+    }
+  } else {
+    setTimeout(() => {
+      addMsg('收到！如需查询酒店价格，请告诉我：\n📍 城市名称\n🏨 酒店名称（可选）\n📅 入住/离店日期\n\n例如："查三亚天域酒店4月11号价格"', 'ai');
+    }, 400);
+  }
+
+  isLoading = false;
+  document.getElementById('sendBtn').disabled = false;
+  scrollBottom();
+}
+
+// ==================== 调用OTA API ====================
+async function callOTA(query) {
+  const url = `${API}/api/hotel/search?destName=${encodeURIComponent(query.dest)}&keyWords=${encodeURIComponent(query.hotelName)}&checkIn=${query.checkIn}&checkOut=${query.checkOut}`;
+  const res = await fetch(url);
+  return res.json();
+}
+
+// ==================== 演示模式（API失败时使用）====================
+function showDemoMode(query) {
+  // 生成演示数据
+  const dest = query.dest || '三亚';
+  const hotelName = query.hotelName || '';
+  
+  const demoHotels = [
+    {name: dest + (hotelName ? hotelName : '希尔顿度假酒店'), star: '五星级', price: 1288, src: '途牛', score: 4.8, address: dest + '海棠湾度假区', refund: '免费取消', meal: '含双早', url: '#'},
+    {name: dest + (hotelName ? hotelName + '2' : '亚特兰蒂斯酒店'), star: '五星级', price: 2188, src: '飞猪', score: 4.9, address: dest + '海棠湾', refund: '免费取消', meal: '含双早', url: '#'},
+    {name: dest + (hotelName ? hotelName + '3' : '天域度假酒店'), star: '五星级', price: 988, src: '途牛', score: 4.7, address: dest + '亚龙湾', refund: '免费取消', meal: '含早', url: '#'},
+    {name: dest + (hotelName ? hotelName + '4' : '瑞吉度假酒店'), star: '五星级', price: 1888, src: '飞猪', score: 4.8, address: dest + '亚龙湾', refund: '限时取消', meal: '含双早', url: '#'},
+    {name: dest + (hotelName ? hotelName + '5' : '喜来登度假酒店'), star: '五星级', price: 788, src: '途牛', score: 4.6, address: dest + '亚龙湾', refund: '免费取消', meal: '含早', url: '#'},
+  ];
+  
+  currentHotels = demoHotels;
+  currentQuery = query;
+  window._allHotels = demoHotels;
+  
+  // 显示提示
+  addMsg('📡 API服务未连接，已切换到演示模式\n\n以下是 ' + dest + ' 的示例酒店数据（实际价格需API服务支持）', 'ai');
+  
+  // 渲染结果
+  renderOTAResult(demoHotels, query, { flyaiOK: false, tnCount: 3, fyCount: 2 });
+  
+  // 添加重试按钮
+  setTimeout(() => {
+    const btn = document.createElement('button');
+    btn.className = 'ota-act-btn';
+    btn.style.marginTop = '12px';
+    btn.style.background = '#FFF3E0';
+    btn.style.color = '#E65100';
+    btn.textContent = '🔄 重试连接真实API';
+    btn.onclick = async function() {
+      btn.textContent = '连接中...';
+      try {
+        const res = await fetch(API + '/health');
+        if (res.ok) {
+          btn.textContent = '✅ 连接成功';
+          btn.style.background = '#E8F5E9';
+          btn.style.color = '#2E7D32';
+          setTimeout(() => {
+            // 重新发送查询
+            const input = document.getElementById('chatInput');
+            input.value = '查' + dest + (hotelName ? hotelName : '');
+            document.getElementById('sendBtn').click();
+          }, 1000);
+        }
+      } catch(e) {
+        btn.textContent = '❌ 连接失败';
+      }
+    };
+    const lastPanel = document.querySelector('.ota-panel');
+    if (lastPanel) lastPanel.appendChild(btn);
+  }, 500);
+}
+
+// ==================== 渲染OTA结果 ====================
+function renderOTAResult(hotels, query, meta) {
+  removeLoading();
+
+  if (!hotels.length) {
+    addMsg('未找到相关酒店，请尝试其他关键词或目的地', 'ai');
+    return;
+  }
+
+  const { flyaiOK, tnCount, fyCount } = meta;
+  const totalCount = hotels.length;
+  const bestPrice = hotels[0]?.price || 0;
+  const bestName = hotels[0]?.name || '';
+  const flyaiHotels = hotels.filter(h => h.src === '飞猪');
+  const tuniuHotels = hotels.filter(h => h.src === '途牛');
+
+  // 摘要消息
+  let summary = `✅ 查询完成！共找到 <strong>${totalCount}</strong> 家酒店\n`;
+  summary += `📍 ${query.dest} ${query.hotelName || ''} | ${query.checkIn} ~ ${query.checkOut}\n`;
+  summary += `🏆 最低价: <strong style="color:#FF6B35">¥${bestPrice.toLocaleString()}</strong> — ${bestName}\n`;
+  summary += `📊 途牛 ${tnCount}家 + 飞猪 ${fyCount}家`;
+  if (flyaiOK) summary += `\n\n💡 飞猪数据来自实时API查询`;
+
+  addMsg(summary, 'ai');
+
+  // 构建HTML面板
+  const panel = document.createElement('div');
+  panel.className = 'ota-panel';
+
+  // 头部
+  const head = document.createElement('div');
+  head.className = 'ota-head';
+  head.innerHTML = `
+    <div class="ota-title-row">
+      <span style="font-size:24px">🍅</span>
+      <div>
+        <div class="ota-title">${query.dest} ${query.hotelName || ''} 酒店比价</div>
+        <div class="ota-sub">${query.checkIn} ~ ${query.checkOut} · ${query.days}晚</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px;align-items:center">
+      <span style="font-size:12px;opacity:0.8">🏆 最低</span>
+      <span style="font-size:20px;font-weight:700">¥${bestPrice.toLocaleString()}</span>
+      <div class="ota-count-badge">${totalCount}家</div>
+    </div>
+  `;
+  panel.appendChild(head);
+
+  // 平台筛选
+  const platDiv = document.createElement('div');
+  platDiv.className = 'ota-platforms';
+  platDiv.innerHTML = `
+    <span class="platform-chip all active" onclick="filterHotels('all', this)" data-src="all">全部 (${totalCount})</span>
+    <span class="platform-chip tuniu" onclick="filterHotels('途牛', this)" data-src="途牛">🏨 途牛 (${tnCount})</span>
+    <span class="platform-chip fliggy" onclick="filterHotels('飞猪', this)" data-src="飞猪">🏨 飞猪 (${fyCount})</span>
+  `;
+  panel.appendChild(platDiv);
+
+  // 酒店列表
+  const list = document.createElement('div');
+  list.className = 'hotels-list';
+  list.id = 'hotelsList';
+  list.innerHTML = hotels.map((h, i) => renderHotelCard(h, i, i === 0)).join('');
+  panel.appendChild(list);
+
+  // 操作按钮
+  const actions = document.createElement('div');
+  actions.className = 'ota-actions';
+  actions.innerHTML = `
+    <button class="ota-act-btn" onclick="copyAllPrices()">📋 复制价格</button>
+    <button class="ota-act-btn" onclick="showFeishuPanel()">📊 同步飞书</button>
+    <button class="ota-act-btn" onclick="window.open('hotel-price-comparison.html?dest=${encodeURIComponent(query.dest)}','_blank')">🔍 查看更多</button>
+    <button class="ota-act-btn" onclick="showPriceTrend()">📈 价格趋势</button>
+  `;
+  panel.appendChild(actions);
+
+  document.getElementById('messages').appendChild(panel);
+  scrollBottom();
+
+  // 缓存用于筛选
+  window._allHotels = hotels;
+}
+
+function renderHotelCard(h, i, isBest) {
+  const pc = getPriceColor(h.price);
+  const srcClass = h.src === '途牛' ? 't' : 'f';
+  const rankClass = isBest ? 'gold' : 'num';
+  const rankText = isBest ? '🏅' : (i + 1);
+
+  return `
+    <div class="hotel-card ${isBest ? 'best' : ''} ${h.src === '途牛' ? 'tuniu' : 'fliggy'}"
+         data-src="${h.src}" data-index="${i}">
+      <div class="hotel-card-top">
+        <div class="hotel-rank ${rankClass}">${rankText}</div>
+        <div class="hotel-name">
+          <div class="hotel-name-text">${h.name}</div>
+          <div style="font-size:11px;color:#999">${h.star || ''} ${h.score ? h.score+'分' : ''}</div>
+        </div>
+        <span class="src-badge ${srcClass}">${h.src}</span>
+      </div>
+      <div class="hotel-card-body">
+        <img src="${h.pic || ''}" class="hotel-pic ${!h.pic ? 'hidden' : ''}"
+             onerror="this.classList.add('hidden')">
+        <div class="hotel-details">
+          <div class="hotel-addr">${h.address || ''}</div>
+          <div class="hotel-tags">
+            ${h.refund ? `<span class="hotel-tag">${h.refund}</span>` : ''}
+            ${h.meal ? `<span class="hotel-tag">${h.meal}</span>` : ''}
+            ${isBest ? `<span class="hotel-tag best">🏆 全网最低</span>` : ''}
+          </div>
+        </div>
+        <div class="hotel-right">
+          <div class="hotel-price ${pc.cls}">¥${h.price.toLocaleString()}</div>
+          <div class="hotel-unit">起/晚</div>
+          ${h.score ? `<div class="hotel-score">⭐ ${h.score}</div>` : ''}
+        </div>
+      </div>
+      <div class="hotel-actions">
+        <a href="${h.url || '#'}" target="_blank" class="hotel-btn book">立即预订</a>
+        <button class="hotel-btn copy" onclick="event.stopPropagation();copyHotel(${i})">📋 复制</button>
+      </div>
+    </div>
+  `;
+}
+
+// ==================== 筛选酒店 ====================
+let currentFilter = 'all';
+function filterHotels(src, el) {
+  currentFilter = src;
+  document.querySelectorAll('.platform-chip').forEach(c => c.classList.remove('active'));
+  el?.classList.add('active');
+
+  const all = window._allHotels || [];
+  const filtered = src === 'all' ? all : all.filter(h => h.src === src);
+  const list = document.getElementById('hotelsList');
+  if (!list) return;
+
+  list.innerHTML = filtered.map((h, i) => {
+    const gi = all.indexOf(h);
+    return renderHotelCard(h, gi, currentFilter === 'all' && gi === all.findIndex(x => x.price === Math.min(...all.map(xx => xx.price))));
+  }).join('');
+}
+
+// ==================== 复制价格 ====================
+function copyHotel(index) {
+  const hotels = window._allHotels || currentHotels;
+  const h = hotels[index];
+  if (!h) return;
+  const text = `${h.name}\t${h.src}\t¥${h.price}/晚\t${h.star || ''}\t${h.score || ''}`;
+  copyToClipboard(text, '已复制: ' + h.name);
+}
+
+function copyAllPrices() {
+  const hotels = window._allHotels || currentHotels;
+  if (!hotels.length) return;
+  const text = hotels.map((h, i) => `${i+1}. ${h.name}\t${h.src}\t¥${h.price}/晚\t${h.star || ''}`).join('\n');
+  const header = `${currentQuery.dest} ${currentQuery.hotelName || ''} 酒店比价\n${currentQuery.checkIn} ~ ${currentQuery.checkOut}\n\n${text}`;
+  copyToClipboard(header, `已复制${hotels.length}家酒店价格`);
+}
+
+// ==================== 飞书面板 ====================
+function showFeishuPanel() {
+  const hotels = window._allHotels || currentHotels;
+  if (!hotels.length) { alert('暂无价格数据，请先查询'); return; }
+
+  const panel = document.createElement('div');
+  panel.className = 'feishu-panel';
+  panel.innerHTML = `
+    <div class="feishu-head">
+      <div class="feishu-icon">📊</div>
+      <div class="feishu-title">📋 飞书多维表格同步</div>
+    </div>
+    <div class="feishu-desc">
+      将 <strong>${currentQuery.dest}</strong> ${currentQuery.hotelName || ''} 
+      共 <strong>${hotels.length}</strong> 家酒店价格同步到飞书表格，
+      用于报价和进一步分析。
+    </div>
+    <div class="feishu-btns">
+      <button class="f-btn" onclick="syncToFeishu()">📋 同步到飞书表格</button>
+      <button class="f-btn" onclick="showFeishuScript()">📜 查看Python脚本</button>
+      <button class="f-btn" onclick="generateFeishuLink()">🔗 生成飞书链接</button>
+    </div>
+    <div id="feishuStatus" style="margin-top:12px;font-size:13px;color:#666"></div>
+  `;
+
+  // 移除旧面板
+  const old = document.getElementById('feishuPanelEl');
+  if (old) old.remove();
+
+  panel.id = 'feishuPanelEl';
+  document.getElementById('messages').appendChild(panel);
+  scrollBottom();
+}
+
+function showFeishuScript() {
+  const script = `
+# 番茄旅行 OTA → 飞书表格同步脚本
+# 文件: scripts/hotel_price_to_feishu.py
+
+DEST_NAME = "${currentQuery.dest}"
+KEY_WORDS = "${currentQuery.hotelName || ''}"
+START_DATE = "${currentQuery.checkIn}"
+NIGHTS = ${currentQuery.days || 2}
+
+# 飞书配置
+BASE_TOKEN = "YOUR_BASE_TOKEN"
+TABLE_DAILY = "YOUR_TABLE_ID"
+
+# Windows下必须用 node.exe 直调飞猪CLI
+# 关键教训: Python subprocess调用npx/.cmd输出为空
+# → node "C:/Users/.../flyai.js" search-hotels ...
+  `.trim();
+
+  alert('Python脚本参考:\n\n' + script + '\n\n请查看 scripts/hotel_price_to_feishu.py 获取完整代码');
+}
+
+function generateFeishuLink() {
+  const hotels = window._allHotels || currentHotels;
+  const desc = `🍅 番茄旅行${currentQuery.dest}酒店比价\n日期: ${currentQuery.checkIn} ~ ${currentQuery.checkOut}`;
+  const table = hotels.map((h, i) => `${i+1}. ${h.name} | ${h.src} | ¥${h.price}/晚`).join('\n');
+  const text = encodeURIComponent(desc + '\n\n' + table);
+  alert(`飞书分享链接:\n\n请复制以下内容到飞书文档:\n\n${desc}\n\n${table}\n\n(需配置飞书API才能自动写入表格)`);
+}
+
+async function syncToFeishu() {
+  const status = document.getElementById('feishuStatus');
+  status.textContent = '⏳ 正在同步到飞书...';
+
+  const hotels = window._allHotels || currentHotels;
+  const url = `${API}/api/feishu/write?destName=${encodeURIComponent(currentQuery.dest)}&date=${encodeURIComponent(currentQuery.checkIn)}&hotels=${encodeURIComponent(JSON.stringify(hotels.slice(0, 5)))}`;
+
+  try {
+    const res = await fetch(url);
+    const data = await res.json();
+    status.innerHTML = `✅ 飞书API就绪！\n请使用 scripts/hotel_price_to_feishu.py 脚本写入表格\n\n配置飞书多维表格:\n1. 打开飞书 → 创建多维表格\n2. 获取 base_token 和 table_id\n3. 修改脚本中的 BASE_TOKEN 和 TABLE_DAILY\n4. 运行 python scripts/hotel_price_to_feishu.py`;
+  } catch (e) {
+    status.textContent = '❌ 同步失败: ' + e.message;
+  }
+}
+
+// ==================== 价格趋势 ====================
+function showPriceTrend() {
+  const hotels = window._allHotels || currentHotels;
+  if (!hotels.length) return;
+
+  const panel = document.createElement('div');
+  panel.className = 'price-trend';
+  panel.innerHTML = `
+    <div class="trend-title">📈 ${currentQuery.dest} ${currentQuery.hotelName || ''} 价格趋势（示例7天）</div>
+    <div class="trend-chart" id="trendChart"></div>
+    <div class="trend-info">
+      <span>🏆 建议入住: <strong>${hotels[0]?.checkIn || currentQuery.checkIn}</strong></span>
+      <span>💰 最低价格: <strong style="color:#FF6B35">¥${Math.min(...hotels.map(h => h.price)).toLocaleString()}</strong></span>
+      <span>📊 平均价格: <strong>¥${Math.round(hotels.reduce((s,h) => s+h.price,0)/hotels.length).toLocaleString()}</strong></span>
+    </div>
+    <div style="margin-top:16px;font-size:12px;color:#999;text-align:center">
+      💡 实际趋势需运行 scripts/hotel_price_to_feishu.py 逐日查询生成
+    </div>
+  `;
+
+  document.getElementById('messages').appendChild(panel);
+  scrollBottom();
+
+  // 简单趋势条
+  const chart = document.getElementById('trendChart');
+  const maxPrice = Math.max(...hotels.map(h => h.price));
+  const days = 7;
+  let bars = '';
+  for (let i = 0; i < days; i++) {
+    const price = hotels[i % hotels.length]?.price || hotels[0]?.price;
+    const h = Math.round((price / maxPrice) * 80) + 10;
+    const label = new Date(currentQuery.checkIn);
+    label.setDate(label.getDate() + i);
+    bars += `<div class="trend-bar" style="height:${h}px" data-label="${label.toLocaleDateString('zh-CN',{month:'numeric',day:'numeric'})}"></div>`;
+  }
+  chart.innerHTML = bars;
+}
+
+// ==================== UI 工具函数 ====================
+function addMsg(html, type) {
+  const div = document.createElement('div');
+  div.className = `msg ${type}`;
+  div.innerHTML = `<div class="bubble ${type}">${html.replace(/\n/g, '<br>').replace(/\*\*(.+?)\*\*/g, '<strong>$1</strong>')}</div>`;
+  document.getElementById('messages').appendChild(div);
+  scrollBottom();
+}
+
+function showLoading() {
+  const div = document.createElement('div');
+  div.id = 'loadingMsg';
+  div.className = 'msg ai';
+  div.innerHTML = `
+    <div class="loading-box">
+      <div class="loading-tomato">🍅</div>
+      <div class="loading-text">正在调用OTA技能查询...</div>
+    </div>
+  `;
+  document.getElementById('messages').appendChild(div);
+  scrollBottom();
+}
+
+function removeLoading() {
+  const el = document.getElementById('loadingMsg');
+  if (el) el.remove();
+}
+
+function scrollBottom() {
+  const el = document.getElementById('messages');
+  el.scrollTop = el.scrollHeight;
+}
+
+function copyToClipboard(text, label) {
+  navigator.clipboard.writeText(text).then(() => {
+    showToast(label || '已复制');
+  }).catch(() => {
+    alert(label + ':\n' + text);
+  });
+}
+
+function showToast(msg) {
+  const el = document.createElement('div');
+  el.style = 'position:fixed;bottom:80px;left:50%;transform:translateX(-50%);background:#333;color:#fff;padding:10px 20px;border-radius:20px;font-size:13px;z-index:999;animation:fadeIn 0.3s';
+  el.textContent = msg;
+  document.body.appendChild(el);
+  setTimeout(() => { el.style.opacity = '0'; el.style.transition = 'opacity 0.5s'; setTimeout(() => el.remove(), 500); }, 2000);
+}
+
+// ==================== 历史记录 ====================
+function loadHistory() {
+  try {
+    const s = localStorage.getItem('ota_chat_history');
+    chatHistory = s ? JSON.parse(s) : [];
+    renderHistory();
+  } catch (e) {}
+}
+
+function addToHistory(msg) {
+  const title = msg.substring(0, 30) + (msg.length > 30 ? '...' : '');
+  chatHistory.unshift({ msg, title, time: Date.now(), hotels: JSON.parse(JSON.stringify(currentHotels)), query: JSON.parse(JSON.stringify(currentQuery)) });
+  if (chatHistory.length > 50) chatHistory.pop();
+  try { localStorage.setItem('ota_chat_history', JSON.stringify(chatHistory)); } catch (e) {}
+  renderHistory();
+}
+
+function renderHistory() {
+  const el = document.getElementById('chatHistoryList');
+  if (!chatHistory.length) { el.innerHTML = '<div class="ch-empty">暂无历史记录</div>'; return; }
+  el.innerHTML = chatHistory.map((h, i) => `
+    <div class="ch-item ${i===0?'active':''}" onclick="loadHistoryItem(${i})">
+      <div class="ch-time">${new Date(h.time).toLocaleString('zh-CN',{month:'numeric',day:'numeric',hour:'2-digit',minute:'2-digit'})}</div>
+      <div class="ch-title">${h.title}</div>
+      <div class="ch-actions">
+        <button class="ch-act" onclick="event.stopPropagation();deleteHistory(${i})" title="删除">🗑</button>
+      </div>
+    </div>
+  `).join('');
+}
+
+function loadHistoryItem(i) {
+  const h = chatHistory[i];
+  if (!h) return;
+  document.getElementById('chatInput').value = h.msg;
+  currentHotels = h.hotels || [];
+  currentQuery = h.query || {};
+  document.querySelectorAll('.ch-item').forEach(el => el.classList.remove('active'));
+  document.querySelectorAll('.ch-item')[i]?.classList.add('active');
+}
+
+function deleteHistory(i) {
+  chatHistory.splice(i, 1);
+  try { localStorage.setItem('ota_chat_history', JSON.stringify(chatHistory)); } catch (e) {}
+  renderHistory();
+}
+
+// ==================== 快捷功能 ====================
+function toggleSidebar() {
+  document.getElementById('sidebar').classList.toggle('collapsed');
+}
+
+function toggleQuickPanel() {
+  document.getElementById('quickPanel').classList.toggle('show');
+}
+
+function setMode(mode, el) {
+  currentMode.mode = mode;
+  document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
+  el?.classList.add('active');
+}
+
+function fillQuick(text) {
+  document.getElementById('chatInput').value = text;
+  document.getElementById('chatInput').focus();
+}
+
+function fillAndSearch(dest) {
+  const text = `查${dest}酒店价格`;
+  document.getElementById('chatInput').value = text;
+  document.getElementById('quickPanel').classList.remove('show');
+  setTimeout(() => sendMessage(), 100);
+}
+
+function useTool(tool) {
+  const map = {
+    hotel: '查三亚酒店价格',
+    flight: '查北京到三亚机票',
+    feishu: '同步到飞书',
+    trend: '查看三亚酒店价格趋势'
+  };
+  fillQuick(map[tool] || '查三亚酒店价格');
+}
+
+function handleFile(el) {
+  if (el.files?.length) {
+    addMsg(`📎 已选择文件: ${el.files[0].name}`, 'user');
+    addMsg('收到附件！目前支持图片和文件保存，将在后续版本中提供AI分析功能', 'ai');
+  }
+}
+
+function showDailyPrices() {
+  alert('📅 每日价格追踪\n\n此功能需要运行:\npython scripts/hotel_price_to_feishu.py\n\n它会从 START_DATE 开始逐日查询 NIGHTS 天价格，\n自动写入飞书多维表格，生成价格趋势报告。');
+}
+
+// ==================== 快捷搜索参数 ====================
+// 如果URL有参数，自动搜索
+(function() {
+  const params = new URLSearchParams(location.search);
+  const dest = params.get('dest');
+  if (dest) {
+    setTimeout(() => {
+      fillAndSearch(dest);
+    }, 1000);
+  }
+})();
+</script>
+<button class="fbtn" onclick="goBack()" title="返回首页">←</button>
+<style>
+.fbtn{position:fixed;bottom:30px;left:30px;width:50px;height:50px;background:linear-gradient(135deg,#FF6B35,#E55A2B);color:#fff;border:none;border-radius:50%;font-size:24px;cursor:pointer;box-shadow:0 4px 15px rgba(255,107,53,0.4);z-index:1000;transition:all .3s;display:flex;align-items:center;justify-content:center}
+.fbtn:hover{transform:scale(1.1)}
+</style>
+<script>
+function goBack(){if(document.referrer&&document.referrer.indexOf(window.location.host)!==-1){history.back()}else{window.location.href='index.html'}}
+</script>
+</body>
+</html>

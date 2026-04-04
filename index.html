@@ -1,103 +1,1015 @@
 <!DOCTYPE html>
 <html lang="zh-CN">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>🍅 番茄旅行AI - 智能旅游定制助手</title>
-<style>
-*{margin:0;padding:0;box-sizing:border-box}
-:root{--p:#FF6B35;--p2:#E55A2B;--a:#00C9A7;--s:#1A3A4A;--bg:#F8F9FA;--t:#1A1A2E;--g:#6B7280}
-body{font-family:-apple-system,'PingFang SC','Microsoft YaHei',sans-serif;background:linear-gradient(135deg,#FFF9F5,#F0FFF9);min-height:100vh}
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>旅游定制师AI助手 - 让定制更简单</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --primary: #FF6B35;
+            --primary-dark: #E55A2B;
+            --secondary: #1A3A4A;
+            --accent: #00C9A7;
+            --bg-light: #FFF9F5;
+            --bg-gradient: linear-gradient(135deg, #FFF9F5 0%, #F0FFF9 50%, #F0F5FF 100%);
+            --text-dark: #1A1A2E;
+            --text-gray: #6B7280;
+            --shadow: 0 20px 60px rgba(255, 107, 53, 0.1);
+            --shadow-hover: 0 30px 80px rgba(255, 107, 53, 0.2);
+        }
 
-nav{position:fixed;top:0;left:0;right:0;padding:16px 40px;display:flex;justify-content:space-between;align-items:center;z-index:100;background:rgba(255,255,255,0.9);backdrop-filter:blur(20px);border-bottom:1px solid rgba(255,107,53,0.1)}
-.logo{display:flex;align-items:center;gap:10px;font-size:20px;font-weight:700;color:var(--p);text-decoration:none}
-.logo-icon{width:40px;height:40px;background:linear-gradient(135deg,var(--p),var(--a));border-radius:12px;display:flex;align-items:center;justify-content:center;font-size:20px}
-.nav-links{display:flex;gap:32px;list-style:none}
-.nav-links a{text-decoration:none;color:var(--t);font-weight:500;transition:color 0.3s}
-.nav-links a:hover{color:var(--p)}
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-main{padding-top:100px;max-width:1200px;margin:0 auto;padding-left:40px;padding-right:40px}
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-dark);
+            line-height: 1.6;
+            min-height: 100vh;
+        }
 
-.hero{text-align:center;padding:60px 0}
-.hero h1{font-size:48px;font-weight:700;margin-bottom:20px;background:linear-gradient(135deg,var(--t),var(--p));-webkit-background-clip:text;-webkit-text-fill-color:transparent}
-.hero p{font-size:18px;color:var(--g);margin-bottom:40px}
-.hero-btns{display:flex;gap:16px;justify-content:center}
-.btn{padding:16px 32px;border-radius:12px;font-size:16px;font-weight:600;cursor:pointer;text-decoration:none;transition:all 0.2s}
-.btn-primary{background:linear-gradient(135deg,var(--p),var(--p2));color:#fff;border:none}
-.btn-primary:hover{transform:translateY(-3px);box-shadow:0 10px 30px rgba(255,107,53,0.3)}
-.btn-secondary{background:#fff;color:var(--p);border:2px solid var(--p)}
-.btn-secondary:hover{background:#FFF5F0}
+        /* 背景装饰 */
+        .bg-decoration {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
 
-.features{display:grid;grid-template-columns:repeat(auto-fit,minmax(280px,1fr));gap:24px;margin:60px 0}
-.feature{background:#fff;border-radius:16px;padding:28px;box-shadow:0 4px 20px rgba(0,0,0,0.06);transition:all 0.2s}
-.feature:hover{transform:translateY(-5px);box-shadow:0 10px 40px rgba(0,0,0,0.1)}
-.feature-icon{font-size:40px;margin-bottom:16px}
-.feature-title{font-size:18px;font-weight:700;margin-bottom:10px;color:var(--t)}
-.feature-desc{font-size:14px;color:var(--g);line-height:1.6}
+        .bg-decoration::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(255, 107, 53, 0.08) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: float 20s ease-in-out infinite;
+        }
 
-footer{text-align:center;padding:40px;color:#999;font-size:14px}
-</style>
+        .bg-decoration::after {
+            content: '';
+            position: absolute;
+            bottom: -30%;
+            left: -10%;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(0, 201, 167, 0.08) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: float 25s ease-in-out infinite reverse;
+        }
+
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            50% { transform: translate(30px, -30px) rotate(5deg); }
+        }
+
+        /* 导航 */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 20px 60px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            background: rgba(255, 255, 255, 0.8);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255, 107, 53, 0.1);
+        }
+
+        .logo {
+            font-family: 'Playfair Display', serif;
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+            display: flex;
+            align-items: center;
+            gap: 10px;
+        }
+
+        .logo-icon {
+            width: 40px;
+            height: 40px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 20px;
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 40px;
+            list-style: none;
+        }
+
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-dark);
+            font-weight: 500;
+            transition: color 0.3s;
+            position: relative;
+        }
+
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--primary);
+            transition: width 0.3s;
+        }
+
+        .nav-links a:hover::after {
+            width: 100%;
+        }
+
+        /* 主内容 */
+        main {
+            position: relative;
+            z-index: 1;
+            padding-top: 100px;
+        }
+
+        /* Hero区域 */
+        .hero {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 80px 60px;
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            gap: 80px;
+            align-items: center;
+        }
+
+        .hero-content {
+            animation: slideUp 0.8s ease-out;
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(40px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .tag {
+            display: inline-block;
+            padding: 8px 16px;
+            background: rgba(255, 107, 53, 0.1);
+            color: var(--primary);
+            border-radius: 20px;
+            font-size: 14px;
+            font-weight: 500;
+            margin-bottom: 20px;
+        }
+
+        h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 56px;
+            font-weight: 700;
+            line-height: 1.2;
+            margin-bottom: 24px;
+            background: linear-gradient(135deg, var(--text-dark) 0%, var(--primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .hero-desc {
+            font-size: 18px;
+            color: var(--text-gray);
+            margin-bottom: 32px;
+            max-width: 480px;
+        }
+
+        .hero-buttons {
+            display: flex;
+            gap: 16px;
+        }
+
+        .btn {
+            padding: 16px 32px;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            text-decoration: none;
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .btn-primary {
+            background: var(--primary);
+            color: white;
+            border: none;
+            box-shadow: 0 10px 30px rgba(255, 107, 53, 0.3);
+        }
+
+        .btn-primary:hover {
+            background: var(--primary-dark);
+            transform: translateY(-2px);
+            box-shadow: 0 15px 40px rgba(255, 107, 53, 0.4);
+        }
+
+        .btn-secondary {
+            background: white;
+            color: var(--text-dark);
+            border: 2px solid rgba(26, 58, 74, 0.1);
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+
+        /* Hero 右侧卡片 */
+        .hero-card {
+            background: white;
+            border-radius: 24px;
+            padding: 32px;
+            box-shadow: var(--shadow);
+            animation: slideUp 0.8s ease-out 0.2s both;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .hero-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            right: 0;
+            height: 4px;
+            background: linear-gradient(90deg, var(--primary), var(--accent));
+        }
+
+        .card-header {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            margin-bottom: 24px;
+        }
+
+        .avatar {
+            width: 48px;
+            height: 48px;
+            border-radius: 50%;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            color: white;
+            font-size: 20px;
+        }
+
+        .card-title {
+            font-weight: 600;
+            font-size: 16px;
+        }
+
+        .card-subtitle {
+            font-size: 13px;
+            color: var(--text-gray);
+        }
+
+        .demo-input {
+            background: var(--bg-light);
+            border-radius: 16px;
+            padding: 20px;
+            margin-bottom: 16px;
+        }
+
+        .demo-input-label {
+            font-size: 12px;
+            color: var(--text-gray);
+            margin-bottom: 8px;
+            display: block;
+        }
+
+        .demo-input-text {
+            font-size: 15px;
+            color: var(--text-dark);
+            line-height: 1.6;
+        }
+
+        .demo-input-text .highlight {
+            color: var(--primary);
+            font-weight: 500;
+        }
+
+        /* 功能展示 */
+        .features {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 80px 60px;
+        }
+
+        .section-header {
+            text-align: center;
+            margin-bottom: 60px;
+        }
+
+        .section-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 40px;
+            font-weight: 700;
+            margin-bottom: 16px;
+        }
+
+        .section-desc {
+            color: var(--text-gray);
+            font-size: 18px;
+            max-width: 600px;
+            margin: 0 auto;
+        }
+
+        .features-grid {
+            display: grid;
+            grid-template-columns: repeat(3, 1fr);
+            gap: 32px;
+        }
+
+        .feature-card {
+            background: white;
+            border-radius: 20px;
+            padding: 32px;
+            transition: all 0.3s;
+            border: 1px solid rgba(26, 58, 74, 0.05);
+        }
+
+        .feature-card:hover {
+            transform: translateY(-8px);
+            box-shadow: var(--shadow-hover);
+        }
+
+        .feature-icon {
+            width: 56px;
+            height: 56px;
+            border-radius: 16px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 28px;
+            margin-bottom: 20px;
+        }
+
+        .feature-icon.orange { background: rgba(255, 107, 53, 0.1); }
+        .feature-icon.teal { background: rgba(0, 201, 167, 0.1); }
+        .feature-icon.blue { background: rgba(26, 58, 74, 0.1); }
+
+        .feature-title {
+            font-size: 20px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .feature-desc {
+            color: var(--text-gray);
+            font-size: 15px;
+        }
+
+        /* AI 对话演示 */
+        .demo-section {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 80px 60px;
+        }
+
+        .demo-container {
+            background: white;
+            border-radius: 24px;
+            box-shadow: var(--shadow);
+            overflow: hidden;
+        }
+
+        .demo-header {
+            background: linear-gradient(135deg, var(--secondary) 0%, #2D5A6B 100%);
+            padding: 24px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+        }
+
+        .demo-title {
+            color: white;
+            font-weight: 600;
+            font-size: 18px;
+        }
+
+        .demo-status {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 14px;
+        }
+
+        .status-dot {
+            width: 8px;
+            height: 8px;
+            background: #00C9A7;
+            border-radius: 50%;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.5; }
+        }
+
+        .demo-body {
+            display: grid;
+            grid-template-columns: 1fr 1fr;
+            min-height: 400px;
+        }
+
+        .chat-panel {
+            padding: 32px;
+            border-right: 1px solid rgba(26, 58, 74, 0.08);
+        }
+
+        .message {
+            margin-bottom: 20px;
+            animation: fadeIn 0.3s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; transform: translateY(10px); }
+            to { opacity: 1; transform: translateY(0); }
+        }
+
+        .message.user {
+            text-align: right;
+        }
+
+        .message-bubble {
+            display: inline-block;
+            padding: 12px 18px;
+            border-radius: 16px;
+            max-width: 85%;
+            font-size: 15px;
+            line-height: 1.5;
+        }
+
+        .message.user .message-bubble {
+            background: var(--primary);
+            color: white;
+            border-bottom-right-radius: 4px;
+        }
+
+        .message.ai .message-bubble {
+            background: var(--bg-light);
+            color: var(--text-dark);
+            border-bottom-left-radius: 4px;
+        }
+
+        .result-panel {
+            padding: 32px;
+            background: var(--bg-light);
+        }
+
+        .result-section {
+            margin-bottom: 24px;
+        }
+
+        .result-label {
+            font-size: 12px;
+            color: var(--text-gray);
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            margin-bottom: 8px;
+        }
+
+        .result-title {
+            font-size: 18px;
+            font-weight: 600;
+            margin-bottom: 12px;
+        }
+
+        .result-item {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            padding: 12px;
+            background: white;
+            border-radius: 12px;
+            margin-bottom: 8px;
+        }
+
+        .result-item-icon {
+            width: 36px;
+            height: 36px;
+            border-radius: 10px;
+            background: rgba(255, 107, 53, 0.1);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .result-item-text {
+            flex: 1;
+        }
+
+        .result-item-name {
+            font-weight: 500;
+            font-size: 14px;
+        }
+
+        .result-item-desc {
+            font-size: 12px;
+            color: var(--text-gray);
+        }
+
+        /* 价格估算 */
+        .price-table {
+            background: white;
+            border-radius: 12px;
+            overflow: hidden;
+        }
+
+        .price-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 12px 16px;
+            border-bottom: 1px solid rgba(26, 58, 74, 0.05);
+        }
+
+        .price-row:last-child {
+            border-bottom: none;
+            background: rgba(255, 107, 53, 0.05);
+            font-weight: 600;
+        }
+
+        .price-label {
+            color: var(--text-gray);
+            font-size: 14px;
+        }
+
+        .price-value {
+            font-weight: 500;
+        }
+
+        /* CTA */
+        .cta {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 80px 60px 120px;
+        }
+
+        .cta-card {
+            background: linear-gradient(135deg, var(--secondary) 0%, #2D5A6B 100%);
+            border-radius: 32px;
+            padding: 60px;
+            text-align: center;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .cta-card::before {
+            content: '';
+            position: absolute;
+            top: -100px;
+            right: -100px;
+            width: 300px;
+            height: 300px;
+            background: radial-gradient(circle, rgba(255, 107, 53, 0.3) 0%, transparent 70%);
+            border-radius: 50%;
+        }
+
+        .cta-title {
+            font-family: 'Playfair Display', serif;
+            font-size: 36px;
+            color: white;
+            margin-bottom: 16px;
+            position: relative;
+        }
+
+        .cta-desc {
+            color: rgba(255, 255, 255, 0.7);
+            font-size: 18px;
+            margin-bottom: 32px;
+            position: relative;
+        }
+
+        .cta .btn-primary {
+            position: relative;
+            padding: 20px 48px;
+            font-size: 18px;
+        }
+
+        /* 页脚 */
+        footer {
+            background: var(--secondary);
+            padding: 40px 60px;
+            text-align: center;
+            color: rgba(255, 255, 255, 0.5);
+            font-size: 14px;
+        }
+
+        /* 响应式 */
+        @media (max-width: 1024px) {
+            .hero {
+                grid-template-columns: 1fr;
+                padding: 40px 24px;
+                text-align: center;
+            }
+
+            h1 {
+                font-size: 40px;
+            }
+
+            .hero-desc {
+                margin: 0 auto 32px;
+            }
+
+            .hero-buttons {
+                justify-content: center;
+            }
+
+            .features-grid {
+                grid-template-columns: 1fr;
+            }
+
+            .demo-body {
+                grid-template-columns: 1fr;
+            }
+
+            .chat-panel {
+                border-right: none;
+                border-bottom: 1px solid rgba(26, 58, 74, 0.08);
+            }
+        }
+
+        @media (max-width: 768px) {
+            nav {
+                padding: 16px 24px;
+            }
+
+            .nav-links {
+                display: none;
+            }
+
+            .features, .demo-section, .cta {
+                padding: 40px 24px;
+            }
+        }
+
+        /* 浮动返回按钮 */
+        .back-btn {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            border: none;
+            border-radius: 50%;
+            font-size: 24px;
+            cursor: pointer;
+            box-shadow: 0 4px 15px rgba(255, 107, 53, 0.4);
+            z-index: 1000;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .back-btn:hover {
+            transform: scale(1.1);
+            box-shadow: 0 6px 25px rgba(255, 107, 53, 0.5);
+        }
+    </style>
 </head>
 <body>
-<nav>
-    <a href="index.html" class="logo">
-        <div class="logo-icon">🍅</div>
-        <span>番茄旅行AI</span>
-    </a>
-    <ul class="nav-links">
-        <li><a href="index.html">首页</a></li>
-        <li><a href="hotel-price.html">🏨 酒店比价</a></li>
-        <li><a href="ai-assistant.html">🤖 AI助手</a></li>
-    </ul>
-</nav>
+    <div class="bg-decoration"></div>
 
-<main>
-    <div class="hero">
-        <h1>🍅 番茄旅行AI</h1>
-        <p>智能酒店比价助手 · 一键查询途牛+飞猪实时价格<br>自动同步飞书表格 · 让旅游定制更简单</p>
-        <div class="hero-btns">
-            <a href="hotel-price.html" class="btn btn-primary">🏨 开始比价</a>
-            <a href="ai-assistant.html" class="btn btn-secondary">🤖 AI助手</a>
+    <nav>
+        <div class="logo">
+            <div class="logo-icon">🍅</div>
+            番茄旅行AI
         </div>
-    </div>
+        <ul class="nav-links">
+            <li><a href="#features">功能介绍</a></li>
+            <li><a href="hotel-price-comparison.html">🏨 酒店比价</a></li>
+            <li><a href="ai-assistant-ota.html">🤖 AI助手</a></li>
+            <li><a href="index-full.html">🏢 供应商库</a></li>
+            <li><a href="#contact">联系我们</a></li>
+        </ul>
+        <div style="display:flex;gap:12px;align-items:center">
+            <a href="hotel-price-comparison.html" style="padding:8px 16px;background:linear-gradient(135deg,#FF6B35,#E67E00);color:#fff;border-radius:8px;text-decoration:none;font-size:14px;font-weight:600">🏨 酒店比价</a>
+            <a href="user-login.html" class="btn btn-secondary" style="padding:10px 20px;font-size:14px">👤 登录</a>
+        </div>
+    </nav>
 
-    <div class="features">
-        <div class="feature">
-            <div class="feature-icon">🏨</div>
-            <div class="feature-title">实时酒店比价</div>
-            <div class="feature-desc">途牛 + 飞猪双平台实时价格对比，支持城市查询、酒店名搜索、日期查询</div>
-        </div>
-        <div class="feature">
-            <div class="feature-icon">🤖</div>
-            <div class="feature-title">AI智能助手</div>
-            <div class="feature-desc">自然语言查询，自动调用OTA技能，输入"查三亚天域酒店价格"即可</div>
-        </div>
-        <div class="feature">
-            <div class="feature-icon">📊</div>
-            <div class="feature-title">飞书表格同步</div>
-            <div class="feature-desc">自动逐日查询飞猪、途牛价格并写入飞书多维表格，用于报价和趋势分析</div>
-        </div>
-        <div class="feature">
-            <div class="feature-icon">⚡</div>
-            <div class="feature-title">快捷工具栏</div>
-            <div class="feature-desc">酒店比价、机票查询、门票查询、火车票、价格趋势，一键直达</div>
-        </div>
-        <div class="feature">
-            <div class="feature-icon">💰</div>
-            <div class="feature-title">价格颜色分级</div>
-            <div class="feature-desc">🟢经济(≤¥500) 🟠舒适(¥500-1500) 🔴高档(¥1500-3000) 🟣豪华(>¥3000)</div>
-        </div>
-        <div class="feature">
-            <div class="feature-icon">📈</div>
-            <div class="feature-title">价格趋势分析</div>
-            <div class="feature-desc">查看7天价格走势，帮助选择最佳入住时间，节省预算</div>
-        </div>
-    </div>
-</main>
+    <main>
+        <section class="hero">
+            <div class="hero-content">
+                <span class="tag">🎉 旅游定制师专属AI助手</span>
+                <h1>找供应商不再麻烦<br>AI帮你一条龙</h1>
+                <p class="hero-desc">
+                    输入客户需求，AI自动生成行程方案+推荐优质供应商+预估价格。
+                    从此告别找10个人比价的苦逼日子 🦞
+                </p>
+                <div class="hero-buttons">
+                    <a href="index-full.html" class="btn btn-primary">
+                        🚀 立即体验Demo
+                    </a>
+                    <a href="#contact" class="btn btn-secondary">
+                        了解价格
+                    </a>
+                </div>
+            </div>
 
-<footer>
-    <p>🍅 番茄旅行AI · 让旅游定制更智能</p>
-    <p style="margin-top:8px">Powered by 途牛开放平台 + 飞猪CLI + 飞书多维表格</p>
-</footer>
+            <div class="hero-card">
+                <div class="card-header">
+                    <div class="avatar">🍅</div>
+                    <div>
+                        <div class="card-title">番茄AI助手</div>
+                        <div class="card-subtitle">在线 · 秒级响应</div>
+                    </div>
+                </div>
+                <div class="demo-input">
+                    <span class="demo-input-label">📥 客户需求输入</span>
+                    <div class="demo-input-text">
+                        普吉岛5天4晚，2人，预算<span class="highlight">4000元/人</span>，<span class="highlight">蜜月</span>，想要<span class="highlight">休闲浪漫</span>，需要中文服务
+                    </div>
+                </div>
+                <div class="demo-input">
+                    <span class="demo-input-label">📤 AI 输出</span>
+                    <div class="demo-input-text">
+                        已为您匹配 <span class="highlight">3家</span> 普吉岛优质地接社，生成行程方案，预估价格 <span class="highlight">¥3900/人</span>
+                    </div>
+                </div>
+                <div style="margin-top:16px;padding-top:16px;border-top:1px solid rgba(255,107,53,0.1)">
+                    <a href="hotel-price-comparison.html" style="display:flex;align-items:center;gap:8px;padding:12px 16px;background:linear-gradient(135deg,#FF6B35,#E67E00);color:#fff;border-radius:12px;text-decoration:none;font-weight:600;font-size:14px">
+                        <span>🏨</span>
+                        <span>实时酒店比价 - 途牛·飞猪双平台</span>
+                        <span style="margin-left:auto">→</span>
+                    </a>
+                </div>
+            </div>
+        </section>
+
+        <section class="features" id="features">
+            <div class="section-header">
+                <h2 class="section-title">核心功能</h2>
+                <p class="section-desc">专为旅游定制师打造的AI工具，一个界面搞定所有工作</p>
+            </div>
+
+            <div class="features-grid">
+                <div class="feature-card">
+                    <div class="feature-icon orange">🔍</div>
+                    <h3 class="feature-title">供应商导航</h3>
+                    <p class="feature-desc">
+                        地接社、酒店、景区、交通、签证...一个搜索全部找到。
+                        按地区、按类型、按预算精准筛选。
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon teal">🤖</div>
+                    <h3 class="feature-title">AI行程生成</h3>
+                    <p class="feature-desc">
+                        输入客户需求，AI自动生成完整行程方案。
+                        包含每日安排、住宿推荐、用车安排...
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon blue">💰</div>
+                    <h3 class="feature-title">价格对比</h3>
+                    <p class="feature-desc">
+                        同一线路不同供应商报价一目了然。
+                        再也不用一个个去问、去比、去记。
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon orange">📋</div>
+                    <h3 class="feature-title">行程模板库</h3>
+                    <p class="feature-desc">
+                        沉淀优秀行程模板，支持复用和分享。
+                        让好方案创造更多价值。
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon teal">📰</div>
+                    <h3 class="feature-title">行业资讯</h3>
+                    <p class="feature-desc">
+                        签证政策、航班动态、目的地安全提醒...
+                        信息碎片化？不存在的。
+                    </p>
+                </div>
+
+                <div class="feature-card">
+                    <div class="feature-icon blue">👥</div>
+                    <h3 class="feature-title">客户管理</h3>
+                    <p class="feature-desc">
+                        客户需求历史、行程记录、沟通留痕。
+                        服务过的客户都在这里。
+                    </p>
+                </div>
+            </div>
+        </section>
+
+        <!-- 酒店比价嵌入区域 -->
+        <section class="demo-section" id="hotel-price" style="margin-top:40px">
+            <div class="section-header">
+                <h2 class="section-title">🏨 实时酒店比价</h2>
+                <p class="section-desc">途牛+飞猪双平台实时价格对比，无需跳转，直接查询</p>
+            </div>
+            
+            <div style="background:white;border-radius:24px;box-shadow:0 10px 40px rgba(255,107,53,0.1);overflow:hidden;border:2px solid rgba(255,107,53,0.1)">
+                <!-- 嵌入完整的酒店比价页面 -->
+                <iframe src="hotel-price-comparison.html" width="100%" height="750" frameborder="0" style="border:none;display:block" id="hotelPriceFrame"></iframe>
+            </div>
+            
+            <!-- 如果iframe加载失败，显示备用链接 -->
+            <div id="iframeFallback" style="display:none;text-align:center;padding:40px;background:#f8f9fa;border-radius:16px;margin-top:20px">
+                <div style="font-size:40px;margin-bottom:16px">🏨</div>
+                <div style="color:#666;margin-bottom:20px">iframe加载受限，请点击下方按钮打开完整页面</div>
+                <a href="hotel-price-comparison.html" target="_blank" style="display:inline-block;padding:12px 32px;background:linear-gradient(135deg,#FF6B35,#E67E00);color:#fff;border-radius:10px;text-decoration:none;font-weight:600">打开酒店比价页面</a>
+            </div>
+        </section>
+
+        <section class="demo-section" id="demo">
+            <div class="section-header">
+                <h2 class="section-title">在线演示</h2>
+                <p class="section-desc">看看AI是如何工作的</p>
+            </div>
+
+            <div class="demo-container">
+                <div class="demo-header">
+                    <div class="demo-title">🗣️ 与AI助手对话</div>
+                    <div class="demo-status">
+                        <span class="status-dot"></span>
+                        在线
+                    </div>
+                </div>
+
+                <div class="demo-body">
+                    <div class="chat-panel">
+                        <div class="message user">
+                            <div class="message-bubble">
+                                普吉岛5天4晚，2人，预算4000元/人，蜜月，想要休闲浪漫，需要中文服务
+                            </div>
+                        </div>
+                        <div class="message ai">
+                            <div class="message-bubble">
+                                好的！根据您的需求，我为您推荐以下方案：
+                                <br><br>
+                                🏝️ <strong>普吉岛5天4晚 蜜月行程</strong>
+                                <br>
+                                Day1: 抵达普吉 → 入住卡塔坦尼 → 芭东海滩日落<br>
+                                Day2: 皮皮岛一日游 → 日落巡航晚宴<br>
+                                Day3: 查龙寺 → 普吉镇老街 → 神仙半岛日落<br>
+                                Day4: 皇帝岛/珊瑚岛 → SPA放松<br>
+                                Day5: 自由活动 → 返程
+                            </div>
+                        </div>
+                    </div>
+
+                    <div class="result-panel">
+                        <div class="result-section">
+                            <div class="result-label">🏨 推荐供应商</div>
+                            <div class="result-item">
+                                <div class="result-item-icon">🏝️</div>
+                                <div class="result-item-text">
+                                    <div class="result-item-name">普吉岛阳光地接社</div>
+                                    <div class="result-item-desc">评分 4.8 · 中文服务 · 蜜月专享</div>
+                                </div>
+                            </div>
+                            <div class="result-item">
+                                <div class="result-item-icon">🏨</div>
+                                <div class="result-item-text">
+                                    <div class="result-item-name">卡塔棕榈度假村</div>
+                                    <div class="result-item-desc">海景房 · 蜜月布置 · 4晚 ¥1800</div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <div class="result-section">
+                            <div class="result-label">💰 价格估算</div>
+                            <div class="price-table">
+                                <div class="price-row">
+                                    <span class="price-label">酒店（4晚）</span>
+                                    <span class="price-value">¥1800</span>
+                                </div>
+                                <div class="price-row">
+                                    <span class="price-label">包车（3天）</span>
+                                    <span class="price-value">¥600</span>
+                                </div>
+                                <div class="price-row">
+                                    <span class="price-label">一日游×2</span>
+                                    <span class="price-value">¥800</span>
+                                </div>
+                                <div class="price-row">
+                                    <span class="price-label">餐饮预算</span>
+                                    <span class="price-value">¥500</span>
+                                </div>
+                                <div class="price-row">
+                                    <span class="price-label">其他</span>
+                                    <span class="price-value">¥200</span>
+                                </div>
+                                <div class="price-row">
+                                    <span class="price-label">合计/人</span>
+                                    <span class="price-value" style="color: var(--primary);">¥3900</span>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </div>
+        </section>
+
+        <section class="cta" id="contact">
+            <div class="cta-card">
+                <h2 class="cta-title">让AI成为你的最强搭档</h2>
+                <p class="cta-desc">首批用户享限时优惠，现在加入立享8折</p>
+                <a href="index-full.html" class="btn btn-primary">🚀 立即免费试用</a>
+            </div>
+        </section>
+    </main>
+
+    <footer>
+        <p>© 2026 番茄旅行AI · 旅游定制师专属助手 🦞🍅</p>
+    </footer>
+
+    <!-- 浮动返回按钮 -->
+    <button class="back-btn" onclick="goBack()" title="返回上一页">←</button>
+
+    <script>
+        // 返回按钮功能
+        function goBack() {
+            if (document.referrer && document.referrer.indexOf(window.location.host) !== -1) {
+                history.back();
+            } else {
+                // 如果没有来源，直接返回首页
+                window.location.href = 'index.html';
+            }
+        }
+
+        // 简单的交互效果
+        document.querySelectorAll('a[href^="#"]').forEach(anchor => {
+            anchor.addEventListener('click', function (e) {
+                e.preventDefault();
+                const target = document.querySelector(this.getAttribute('href'));
+                if (target) {
+                    target.scrollIntoView({
+                        behavior: 'smooth'
+                    });
+                }
+            });
+        });
+
+        // 滚动动画
+        const observerOptions = {
+            threshold: 0.1,
+            rootMargin: '0px 0px -50px 0px'
+        };
+
+        const observer = new IntersectionObserver((entries) => {
+            entries.forEach(entry => {
+                if (entry.isIntersecting) {
+                    entry.target.style.opacity = '1';
+                    entry.target.style.transform = 'translateY(0)';
+                }
+            });
+        }, observerOptions);
+
+        document.querySelectorAll('.feature-card').forEach(card => {
+            card.style.opacity = '0';
+            card.style.transform = 'translateY(30px)';
+            card.style.transition = 'all 0.6s ease-out';
+            observer.observe(card);
+        });
+    </script>
 </body>
 </html>
