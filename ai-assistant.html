@@ -35,7 +35,7 @@
             justify-content: space-between;
             align-items: center;
             z-index: 100;
-            background: rgba(255, 255, 255, 0.9);
+            background: rgba(255, 255, 255, 0.95);
             backdrop-filter: blur(20px);
             border-bottom: 1px solid rgba(255, 107, 53, 0.1);
         }
@@ -71,10 +71,40 @@
             color: var(--text-dark);
             font-weight: 500;
             font-size: 14px;
-            transition: color 0.3s;
+            transition: all 0.3s;
+            position: relative;
         }
         
         .nav-links a:hover { color: var(--primary); }
+        
+        .nav-links a.active {
+            color: var(--primary);
+            font-weight: 600;
+        }
+        
+        .nav-right {
+            display: flex;
+            gap: 12px;
+        }
+        
+        .nav-btn {
+            padding: 8px 16px;
+            border-radius: 8px;
+            text-decoration: none;
+            font-size: 14px;
+            font-weight: 500;
+            transition: all 0.3s;
+        }
+        
+        .nav-btn.primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+        }
+        
+        .nav-btn.secondary {
+            border: 1.5px solid #E5E7EB;
+            color: var(--text-gray);
+        }
         
         /* 主内容 */
         main {
@@ -105,6 +135,23 @@
             color: var(--text-gray);
             font-size: 16px;
         }
+        
+        .platform-badges {
+            display: flex;
+            justify-content: center;
+            gap: 12px;
+            margin-top: 16px;
+        }
+        
+        .badge {
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+        }
+        
+        .badge.tuniu { background: #FFF3E0; color: #E65100; }
+        .badge.fliggy { background: #E3F2FD; color: #1565C0; }
         
         /* 快捷工具网格 */
         .tools-grid {
@@ -230,6 +277,29 @@
             cursor: not-allowed;
         }
         
+        /* 热门城市 */
+        .quick-cities {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            margin-top: 16px;
+            flex-wrap: wrap;
+        }
+        
+        .quick-city {
+            padding: 6px 12px;
+            background: #F5F5F5;
+            border-radius: 6px;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .quick-city:hover {
+            background: var(--primary);
+            color: white;
+        }
+        
         /* 结果区域 */
         .results {
             background: white;
@@ -255,6 +325,68 @@
             font-size: 14px;
         }
         
+        /* 筛选栏 */
+        .filter-bar {
+            display: flex;
+            gap: 10px;
+            margin-bottom: 20px;
+            align-items: center;
+        }
+        
+        .filter-label {
+            font-size: 14px;
+            color: var(--text-gray);
+        }
+        
+        .filter-btn {
+            padding: 6px 16px;
+            border: 1px solid #E5E7EB;
+            border-radius: 20px;
+            background: white;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .filter-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        
+        .filter-btn.active {
+            background: var(--primary);
+            color: white;
+            border-color: var(--primary);
+        }
+        
+        /* 批量操作栏 */
+        .batch-actions {
+            display: flex;
+            gap: 12px;
+            margin-bottom: 20px;
+            padding: 12px 16px;
+            background: #F9FAFB;
+            border-radius: 10px;
+        }
+        
+        .batch-btn {
+            padding: 8px 16px;
+            border: 1px solid #E5E7EB;
+            border-radius: 8px;
+            background: white;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        
+        .batch-btn:hover {
+            border-color: var(--primary);
+            color: var(--primary);
+        }
+        
         .loading {
             text-align: center;
             padding: 60px;
@@ -278,7 +410,7 @@
         /* 结果卡片 */
         .result-cards {
             display: grid;
-            grid-template-columns: repeat(auto-fill, minmax(300px, 1fr));
+            grid-template-columns: repeat(auto-fill, minmax(320px, 1fr));
             gap: 20px;
         }
         
@@ -286,11 +418,26 @@
             background: var(--bg-light);
             border-radius: 12px;
             padding: 20px;
-            transition: transform 0.2s;
+            transition: transform 0.2s, box-shadow 0.2s;
+            position: relative;
         }
         
         .result-card:hover {
             transform: translateY(-2px);
+            box-shadow: 0 8px 20px rgba(0, 0, 0, 0.1);
+        }
+        
+        .result-card.selected {
+            border: 2px solid var(--primary);
+        }
+        
+        .card-checkbox {
+            position: absolute;
+            top: 12px;
+            right: 12px;
+            width: 20px;
+            height: 20px;
+            cursor: pointer;
         }
         
         .card-header {
@@ -298,6 +445,7 @@
             justify-content: space-between;
             align-items: flex-start;
             margin-bottom: 12px;
+            padding-right: 30px;
         }
         
         .card-title {
@@ -337,6 +485,43 @@
         .tag.green {
             background: rgba(0, 201, 167, 0.1);
             color: var(--accent);
+        }
+        
+        .card-actions {
+            display: flex;
+            gap: 10px;
+            margin-top: 12px;
+        }
+        
+        .btn-book {
+            flex: 1;
+            padding: 8px 16px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: white;
+            text-decoration: none;
+            border-radius: 8px;
+            font-size: 13px;
+            text-align: center;
+            transition: transform 0.2s;
+        }
+        
+        .btn-book:hover {
+            transform: translateY(-1px);
+        }
+        
+        .btn-copy {
+            padding: 8px 12px;
+            border: 1px solid #E5E7EB;
+            border-radius: 8px;
+            background: white;
+            font-size: 13px;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .btn-copy:hover {
+            border-color: var(--primary);
+            color: var(--primary);
         }
         
         /* 返回按钮 */
@@ -385,6 +570,10 @@
                 padding-left: 20px;
                 padding-right: 20px;
             }
+            
+            .nav-links {
+                display: none;
+            }
         }
     </style>
 </head>
@@ -397,15 +586,23 @@
         <ul class="nav-links">
             <li><a href="index.html">首页</a></li>
             <li><a href="hotel-price-comparison.html">酒店比价</a></li>
-            <li><a href="ai-assistant.html" style="color: var(--primary);">AI助手</a></li>
-            <li><a href="user-login.html">登录</a></li>
+            <li><a href="ai-assistant.html" class="active">AI助手</a></li>
+            <li><a href="admin-panel.html">管理后台</a></li>
         </ul>
+        <div class="nav-right">
+            <a href="user-login.html" class="nav-btn secondary">👤 用户登录</a>
+            <a href="supplier-login.html" class="nav-btn secondary">🏢 供应商</a>
+        </div>
     </nav>
     
     <main>
         <div class="header">
             <h1>🤖 番茄旅行AI助手</h1>
             <p>酒店 · 机票 · 火车票 · 门票 · 邮轮 — 一键查询真实数据</p>
+            <div class="platform-badges">
+                <span class="badge tuniu">🏨 途牛实时数据</span>
+                <span class="badge fliggy">🏨 飞猪实时数据</span>
+            </div>
         </div>
         
         <!-- 快捷工具 -->
@@ -447,9 +644,9 @@
             <!-- 酒店表单 -->
             <div id="hotelForm" class="service-form">
                 <div class="form-row">
-                    <div class="form-group">
-                        <label>目的地/酒店名</label>
-                        <input type="text" id="hotelDest" placeholder="如：三亚、三亚亚特兰蒂斯" value="三亚">
+                    <div class="form-group" style="flex: 2;">
+                        <label>目的地 / 酒店名称</label>
+                        <input type="text" id="hotelDest" placeholder="如：三亚、三亚亚特兰蒂斯酒店" value="三亚">
                     </div>
                     <div class="form-group">
                         <label>入住日期</label>
@@ -460,7 +657,16 @@
                         <input type="date" id="hotelCheckOut" value="2026-04-12">
                     </div>
                 </div>
-                <button class="btn-search" onclick="searchHotel()">🔍 查询酒店</button>
+                <button class="btn-search" id="hotelSearchBtn" onclick="searchHotel()">🔍 查询酒店</button>
+                <div class="quick-cities">
+                    <span style="font-size:13px;color:#999;">热门城市:</span>
+                    <span class="quick-city" onclick="setHotelCity('三亚')">三亚</span>
+                    <span class="quick-city" onclick="setHotelCity('普吉岛')">普吉岛</span>
+                    <span class="quick-city" onclick="setHotelCity('巴厘岛')">巴厘岛</span>
+                    <span class="quick-city" onclick="setHotelCity('新加坡')">新加坡</span>
+                    <span class="quick-city" onclick="setHotelCity('东京')">东京</span>
+                    <span class="quick-city" onclick="setHotelCity('曼谷')">曼谷</span>
+                </div>
             </div>
             
             <!-- 机票表单 -->
@@ -538,6 +744,23 @@
                 <div class="results-title" id="resultsTitle">查询结果</div>
                 <div class="results-count" id="resultsCount"></div>
             </div>
+            
+            <!-- 筛选栏 -->
+            <div class="filter-bar" id="filterBar" style="display: none;">
+                <span class="filter-label">筛选:</span>
+                <button class="filter-btn active" onclick="setFilter('all')">全部</button>
+                <button class="filter-btn" onclick="setFilter('途牛')">🏨 途牛</button>
+                <button class="filter-btn" onclick="setFilter('飞猪')">🏨 飞猪</button>
+            </div>
+            
+            <!-- 批量操作栏 -->
+            <div class="batch-actions" id="batchActions" style="display: none;">
+                <button class="batch-btn" onclick="selectAll()">☑️ 全选</button>
+                <button class="batch-btn" onclick="copySelected()">📋 批量复制</button>
+                <button class="batch-btn" onclick="exportToExcel()">📊 导出Excel</button>
+                <span id="selectedCount" style="color: var(--text-gray); font-size: 13px;"></span>
+            </div>
+            
             <div id="resultsContent">
                 <div style="text-align: center; padding: 40px; color: var(--text-gray);">
                     选择服务并输入条件，点击查询按钮获取真实数据
@@ -549,30 +772,42 @@
     <button class="back-btn" onclick="goBack()">←</button>
     
     <script>
+        let currentService = 'hotel';
+        let currentFilter = 'all';
+        let allResults = [];
+        let selectedItems = new Set();
+        
         // 服务切换
         function selectService(service) {
+            currentService = service;
+            currentFilter = 'all';
+            selectedItems.clear();
+            
             document.querySelectorAll('.tool-card').forEach(card => {
                 card.classList.remove('active');
             });
             document.querySelector(`[data-service="${service}"]`).classList.add('active');
             
-            // 隐藏所有表单
             document.querySelectorAll('.service-form').forEach(form => {
                 form.style.display = 'none';
             });
             
-            // 显示对应表单
             document.getElementById(`${service}Form`).style.display = 'block';
             
-            // 更新标题
             const icons = { hotel: '🏨', flight: '✈️', train: '🚄', ticket: '🎫', cruise: '🚢' };
             const names = { hotel: '酒店查询', flight: '机票查询', train: '火车票查询', ticket: '门票查询', cruise: '邮轮查询' };
             document.getElementById('panelIcon').textContent = icons[service];
             document.getElementById('panelTitle').textContent = names[service];
             
-            // 清空结果
             document.getElementById('resultsContent').innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-gray);">输入条件后点击查询</div>';
             document.getElementById('resultsCount').textContent = '';
+            document.getElementById('filterBar').style.display = 'none';
+            document.getElementById('batchActions').style.display = 'none';
+        }
+        
+        // 设置热门城市
+        function setHotelCity(city) {
+            document.getElementById('hotelDest').value = city;
         }
         
         // 返回
@@ -594,10 +829,91 @@
             `;
         }
         
-        // 显示结果
-        function showResults(items, type) {
-            const count = items.length;
+        // 筛选
+        function setFilter(filter) {
+            currentFilter = filter;
+            document.querySelectorAll('.filter-btn').forEach(btn => {
+                btn.classList.remove('active');
+            });
+            event.target.classList.add('active');
+            renderResults();
+        }
+        
+        // 全选
+        function selectAll() {
+            const filtered = currentFilter === 'all' ? allResults : allResults.filter(r => r.platform === currentFilter);
+            if (selectedItems.size === filtered.length) {
+                selectedItems.clear();
+            } else {
+                selectedItems = new Set(filtered.map((_, i) => i));
+            }
+            renderResults();
+        }
+        
+        // 单项选择
+        function toggleSelect(index) {
+            if (selectedItems.has(index)) {
+                selectedItems.delete(index);
+            } else {
+                selectedItems.add(index);
+            }
+            renderResults();
+        }
+        
+        // 批量复制
+        function copySelected() {
+            if (selectedItems.size === 0) {
+                alert('请先选择要复制的项目');
+                return;
+            }
+            
+            const filtered = currentFilter === 'all' ? allResults : allResults.filter(r => r.platform === currentFilter);
+            const lines = [];
+            selectedItems.forEach(i => {
+                const item = filtered[i];
+                if (currentService === 'hotel') {
+                    lines.push(`${item.name}\t${item.price}元/晚\t${item.platform}\t${item.rating || ''}`);
+                } else {
+                    lines.push(JSON.stringify(item));
+                }
+            });
+            
+            navigator.clipboard.writeText(lines.join('\n')).then(() => {
+                alert(`已复制 ${selectedItems.size} 条数据`);
+            });
+        }
+        
+        // 导出Excel
+        function exportToExcel() {
+            if (allResults.length === 0) {
+                alert('暂无数据可导出');
+                return;
+            }
+            
+            let csv = '';
+            if (currentService === 'hotel') {
+                csv = '酒店名称\t价格\t平台\t评分\n';
+                allResults.forEach(h => {
+                    csv += `${h.name}\t${h.price}\t${h.platform}\t${h.rating || ''}\n`;
+                });
+            }
+            
+            const blob = new Blob(['\ufeff' + csv], { type: 'text/csv;charset=utf-8' });
+            const url = URL.createObjectURL(blob);
+            const a = document.createElement('a');
+            a.href = url;
+            a.download = `${currentService}_export_${new Date().toISOString().slice(0,10)}.csv`;
+            a.click();
+            URL.revokeObjectURL(url);
+        }
+        
+        // 渲染结果
+        function renderResults() {
+            const filtered = currentFilter === 'all' ? allResults : allResults.filter(r => r.platform === currentFilter);
+            const count = filtered.length;
+            
             document.getElementById('resultsCount').textContent = `共 ${count} 条结果`;
+            document.getElementById('selectedCount').textContent = selectedItems.size > 0 ? `已选 ${selectedItems.size} 条` : '';
             
             if (count === 0) {
                 document.getElementById('resultsContent').innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-gray);">未找到相关结果</div>';
@@ -606,10 +922,14 @@
             
             let html = '<div class="result-cards">';
             
-            items.forEach(item => {
-                if (type === 'hotel') {
+            filtered.slice(0, 50).forEach((item, i) => {
+                const isSelected = selectedItems.has(i);
+                
+                if (currentService === 'hotel') {
+                    const priceClass = item.price <= 500 ? 'tag.green' : item.price <= 1500 ? 'tag' : 'tag';
                     html += `
-                        <div class="result-card">
+                        <div class="result-card ${isSelected ? 'selected' : ''}">
+                            <input type="checkbox" class="card-checkbox" ${isSelected ? 'checked' : ''} onchange="toggleSelect(${i})">
                             <div class="card-header">
                                 <div class="card-title">${item.name}</div>
                                 <div class="card-price">¥${item.price}起</div>
@@ -619,12 +939,15 @@
                                 <span>${item.platform || '途牛'}</span>
                             </div>
                             <div class="card-tags">
-                                <span class="tag">${item.price <= 500 ? '经济' : item.price <= 1500 ? '舒适' : '高档'}</span>
-                                ${item.platform === '飞猪' ? '<span class="tag green">飞猪</span>' : '<span class="tag">途牛</span>'}
+                                <span class="${priceClass}">${item.price <= 500 ? '经济' : item.price <= 1500 ? '舒适' : '高档'}</span>
+                            </div>
+                            <div class="card-actions">
+                                <a href="${item.url || '#'}" target="_blank" class="btn-book">立即预订</a>
+                                <button class="btn-copy" onclick="copySingle(${i})">📋</button>
                             </div>
                         </div>
                     `;
-                } else if (type === 'flight') {
+                } else if (currentService === 'flight') {
                     html += `
                         <div class="result-card">
                             <div class="card-header">
@@ -639,7 +962,7 @@
                             </div>
                         </div>
                     `;
-                } else if (type === 'train') {
+                } else if (currentService === 'train') {
                     html += `
                         <div class="result-card">
                             <div class="card-header">
@@ -652,7 +975,7 @@
                             </div>
                         </div>
                     `;
-                } else if (type === 'ticket') {
+                } else if (currentService === 'ticket') {
                     html += `
                         <div class="result-card">
                             <div class="card-header">
@@ -664,7 +987,7 @@
                             </div>
                         </div>
                     `;
-                } else if (type === 'cruise') {
+                } else if (currentService === 'cruise') {
                     html += `
                         <div class="result-card">
                             <div class="card-header">
@@ -684,6 +1007,16 @@
             document.getElementById('resultsContent').innerHTML = html;
         }
         
+        // 复制单个
+        function copySingle(index) {
+            const filtered = currentFilter === 'all' ? allResults : allResults.filter(r => r.platform === currentFilter);
+            const item = filtered[index];
+            const text = `${item.name}\t${item.price}元/晚\t${item.platform}`;
+            navigator.clipboard.writeText(text).then(() => {
+                alert('已复制: ' + item.name);
+            });
+        }
+        
         // API调用
         async function callAPI(endpoint, params) {
             const url = new URL(`http://localhost:3000${endpoint}`);
@@ -695,7 +1028,11 @@
         
         // 酒店查询
         async function searchHotel() {
+            const btn = document.getElementById('hotelSearchBtn');
+            btn.disabled = true;
+            btn.textContent = '⏳ 查询中...';
             showLoading();
+            
             try {
                 const data = await callAPI('/api/hotel/search', {
                     destName: document.getElementById('hotelDest').value,
@@ -704,20 +1041,35 @@
                 });
                 
                 if (data.hotels && data.hotels.length > 0) {
-                    showResults(data.hotels, 'hotel');
+                    allResults = data.hotels;
+                    currentFilter = 'all';
+                    document.getElementById('filterBar').style.display = 'flex';
+                    document.getElementById('batchActions').style.display = 'flex';
+                    renderResults();
                 } else {
-                    showResults([], 'hotel');
+                    allResults = [];
+                    document.getElementById('resultsContent').innerHTML = '<div style="text-align: center; padding: 40px; color: var(--text-gray);">未找到相关酒店</div>';
                 }
             } catch (e) {
-                document.getElementById('resultsContent').innerHTML = `<div style="text-align: center; padding: 40px; color: #E55A2B;">查询失败: ${e.message}<br><br>请确保hotel-api-server.js正在运行 (node hotel-api-server.js)</div>`;
+                document.getElementById('resultsContent').innerHTML = `
+                    <div style="text-align: center; padding: 40px; color: #E55A2B;">
+                        查询失败: ${e.message}<br><br>
+                        <div style="font-size: 14px; color: var(--text-gray);">
+                            请确保hotel-api-server.js正在运行<br>
+                            <code style="background: #f5f5f5; padding: 4px 8px; border-radius: 4px;">node hotel-api-server.js</code>
+                        </div>
+                    </div>
+                `;
             }
+            
+            btn.disabled = false;
+            btn.textContent = '🔍 查询酒店';
         }
         
-        // 机票查询（途牛MCP）
+        // 机票查询
         async function searchFlight() {
             showLoading();
             try {
-                // 调用途牛机票API
                 const response = await fetch('http://localhost:3000/api/flight/search', {
                     method: 'POST',
                     headers: { 'Content-Type': 'application/json' },
@@ -728,19 +1080,20 @@
                     })
                 });
                 const data = await response.json();
-                showResults(data.flights || [], 'flight');
+                allResults = data.flights || [];
+                renderResults();
             } catch (e) {
-                // 模拟数据展示
                 const mockFlights = [
                     { flightNumber: 'JD5577', airlineCompany: '首都航空', departureTime: '07:30', arrivalTime: '11:15', price: 680 },
                     { flightNumber: 'MF8393', airlineCompany: '厦门航空', departureTime: '09:00', arrivalTime: '12:45', price: 720 },
                     { flightNumber: 'HU7279', airlineCompany: '海南航空', departureTime: '14:30', arrivalTime: '18:20', price: 650 }
                 ];
-                showResults(mockFlights, 'flight');
+                allResults = mockFlights;
+                renderResults();
             }
         }
         
-        // 火车票查询（途牛MCP）
+        // 火车票查询
         async function searchTrain() {
             showLoading();
             try {
@@ -754,18 +1107,20 @@
                     })
                 });
                 const data = await response.json();
-                showResults(data.trains || [], 'train');
+                allResults = data.trains || [];
+                renderResults();
             } catch (e) {
                 const mockTrains = [
                     { trainNum: 'G1', departStationName: '北京', destStationName: '上海', departureTime: '07:00', arrivalTime: '11:30', price: 553 },
                     { trainNum: 'G3', departStationName: '北京', destStationName: '上海', departureTime: '08:00', arrivalTime: '12:30', price: 553 },
                     { trainNum: 'D711', departStationName: '北京', destStationName: '上海', departureTime: '19:08', arrivalTime: '07:08', price: 390 }
                 ];
-                showResults(mockTrains, 'train');
+                allResults = mockTrains;
+                renderResults();
             }
         }
         
-        // 门票查询（途牛MCP）
+        // 门票查询
         async function searchTicket() {
             showLoading();
             try {
@@ -778,18 +1133,20 @@
                     })
                 });
                 const data = await response.json();
-                showResults(data.tickets || [], 'ticket');
+                allResults = data.tickets || [];
+                renderResults();
             } catch (e) {
                 const mockTickets = [
                     { name: '蜈支洲岛门票', type: '成人票', price: 168 },
                     { name: '蜈支洲岛门票', type: '儿童票', price: 84 },
                     { name: '蜈支洲岛套票', type: '门票+船票', price: 198 }
                 ];
-                showResults(mockTickets, 'ticket');
+                allResults = mockTickets;
+                renderResults();
             }
         }
         
-        // 邮轮查询（途牛MCP）
+        // 邮轮查询
         async function searchCruise() {
             showLoading();
             try {
@@ -802,13 +1159,15 @@
                     })
                 });
                 const data = await response.json();
-                showResults(data.cruises || [], 'cruise');
+                allResults = data.cruises || [];
+                renderResults();
             } catch (e) {
                 const mockCruises = [
                     { productName: '上海-日本福冈邮轮4晚5天', tourDay: 5, price: 2999, departCityName: '上海' },
                     { productName: '天津-日本长崎邮轮5晚6天', tourDay: 6, price: 3599, departCityName: '天津' }
                 ];
-                showResults(mockCruises, 'cruise');
+                allResults = mockCruises;
+                renderResults();
             }
         }
     </script>
