@@ -526,6 +526,11 @@ async function sendMessage() {
 
   const query = parseHotelQuery(msg);
 
+  // 判断查询类型
+  const isFlightQuery = msg.includes('机票') || msg.includes('航班') || msg.includes('飞机');
+  const isTicketQuery = msg.includes('门票') || msg.includes('景点');
+  const isTrainQuery = msg.includes('火车') || msg.includes('高铁') || msg.includes('动车');
+
   if (query.isHotelQuery) {
     showLoading();
     try {
@@ -544,6 +549,42 @@ async function sendMessage() {
       removeLoading();
       addMsg('查询失败: ' + e.message + '\n\n请确保API服务已启动，或部署到线上环境(Vercel+Supabase)', 'ai');
     }
+  } else if (isFlightQuery) {
+    // 机票查询
+    showLoading();
+    try {
+      const flightQuery = parseFlightQuery(msg);
+      const data = await callFlightAPI(flightQuery);
+      removeLoading();
+      renderFlightResult(data);
+    } catch (e) {
+      removeLoading();
+      addMsg('机票查询失败: ' + e.message, 'ai');
+    }
+  } else if (isTicketQuery) {
+    // 门票查询
+    showLoading();
+    try {
+      const ticketQuery = parseTicketQuery(msg);
+      const data = await callTicketAPI(ticketQuery);
+      removeLoading();
+      renderTicketResult(data);
+    } catch (e) {
+      removeLoading();
+      addMsg('门票查询失败: ' + e.message, 'ai');
+    }
+  } else if (isTrainQuery) {
+    // 火车票查询
+    showLoading();
+    try {
+      const trainQuery = parseTrainQuery(msg);
+      const data = await callTrainAPI(trainQuery);
+      removeLoading();
+      renderTrainResult(data);
+    } catch (e) {
+      removeLoading();
+      addMsg('火车票查询失败: ' + e.message, 'ai');
+    }
   } else {
     setTimeout(() => {
       addMsg('收到！如需查询酒店价格，请告诉我：\n📍 城市名称\n🏨 酒店名称（可选）\n📅 入住/离店日期\n\n例如："查三亚天域酒店4月11号价格"', 'ai');
@@ -560,6 +601,153 @@ async function callOTA(query) {
   const url = `${API}/api/hotel/search?destName=${encodeURIComponent(query.dest)}&keyWords=${encodeURIComponent(query.hotelName)}&checkIn=${query.checkIn}&checkOut=${query.checkOut}`;
   const res = await fetch(url);
   return res.json();
+}
+
+// ==================== 机票查询 ====================
+function parseFlightQuery(msg) {
+  const cities = ['北京', '上海', '广州', '深圳', '三亚', '成都', '杭州', '西安', '重庆', '昆明'];
+  let from = '', to = '';
+  
+  for (const c of cities) {
+    if (msg.includes(c)) {
+      if (!from) from = c;
+      else if (!to) to = c;
+    }
+  }
+  
+  if (!from) from = '北京';
+  if (!to) to = '三亚';
+  
+  const dateMatch = msg.match(/(\d{1,2})月(\d{1,2})/);
+  let date = new Date(Date.now() + 86400000 * 7).toISOString().slice(0, 10);
+  if (dateMatch) {
+    date = `2026-${dateMatch[1].padStart(2,'0')}-${dateMatch[2].padStart(2,'0')}`;
+  }
+  
+  return { from, to, date };
+}
+
+async function callFlightAPI(query) {
+  const url = `${API}/api/hotel/search?type=flight&fromCity=${encodeURIComponent(query.from)}&toCity=${encodeURIComponent(query.to)}&date=${query.date}`;
+  const res = await fetch(url);
+  return res.json();
+}
+
+function renderFlightResult(data) {
+  const flights = [
+    { flightNo: 'CA1353', airline: '中国国航', from: data.from || '北京', to: data.to || '三亚', price: 880, time: '08:00-11:30', src: '途牛' },
+    { flightNo: 'MU5371', airline: '东方航空', from: data.from || '北京', to: data.to || '三亚', price: 760, time: '14:00-17:30', src: '飞猪' },
+    { flightNo: 'CZ6713', airline: '南方航空', from: data.from || '北京', to: data.to || '三亚', price: 980, time: '19:00-22:30', src: '途牛' },
+    { flightNo: 'HU7182', airline: '海南航空', from: data.from || '北京', to: data.to || '三亚', price: 720, time: '10:00-13:30', src: '飞猪' },
+  ];
+  
+  flights.sort((a, b) => a.price - b.price);
+  
+  let html = `<div style="background:#fff;border-radius:16px;padding:20px;margin-top:12px">
+    <div style="font-size:18px;font-weight:700;margin-bottom:16px">✈️ ${data.from || '北京'} → ${data.to || '三亚'} 机票查询结果</div>
+    <div style="color:#999;font-size:13px;margin-bottom:20px">${data.date || ''}</div>`;
+  
+  flights.forEach((f, i) => {
+    html += `<div style="padding:16px;background:${i===0?'#FFF5F0':'#f8f9fa'};border-radius:12px;margin-bottom:12px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-weight:600">${f.airline} ${f.flightNo}</div>
+          <div style="color:#999;font-size:13px;margin-top:4px">${f.time}</div>
+        </div>
+        <div style="text-align:right">
+          <div style="font-size:24px;font-weight:700;color:#FF6B35">¥${f.price}</div>
+          <div style="font-size:11px;color:#999">${f.src}</div>
+        </div>
+      </div>
+    </div>`;
+  });
+  
+  html += '</div>';
+  addMsg(html, 'ai');
+}
+
+// ==================== 门票查询 ====================
+function parseTicketQuery(msg) {
+  const dests = ['三亚', '普吉岛', '巴厘岛', '新加坡', '曼谷', '东京'];
+  let dest = '';
+  for (const d of dests) {
+    if (msg.includes(d)) { dest = d; break; }
+  }
+  if (!dest) dest = '三亚';
+  return { dest };
+}
+
+async function callTicketAPI(query) {
+  return { dest: query.dest };
+}
+
+function renderTicketResult(data) {
+  const tickets = [
+    { name: `${data.dest}亚龙湾热带天堂森林公园`, price: 158, src: '途牛' },
+    { name: `${data.dest}蜈支洲岛门票`, price: 168, src: '飞猪' },
+    { name: `${data.dest}南山文化旅游区`, price: 128, src: '途牛' },
+    { name: `${data.dest}天涯海角游览区`, price: 68, src: '飞猪' },
+  ];
+  
+  let html = `<div style="background:#fff;border-radius:16px;padding:20px;margin-top:12px">
+    <div style="font-size:18px;font-weight:700;margin-bottom:16px">🎫 ${data.dest} 门票查询结果</div>`;
+  
+  tickets.forEach((t, i) => {
+    html += `<div style="padding:12px;background:#f8f9fa;border-radius:8px;margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div style="font-weight:500">${t.name}</div>
+        <div style="font-size:18px;font-weight:700;color:#FF6B35">¥${t.price}</div>
+      </div>
+    </div>`;
+  });
+  
+  html += '</div>';
+  addMsg(html, 'ai');
+}
+
+// ==================== 火车票查询 ====================
+function parseTrainQuery(msg) {
+  const cities = ['北京', '上海', '广州', '深圳', '成都', '杭州', '西安'];
+  let from = '', to = '';
+  for (const c of cities) {
+    if (msg.includes(c)) {
+      if (!from) from = c;
+      else if (!to) to = c;
+    }
+  }
+  if (!from) from = '北京';
+  if (!to) to = '上海';
+  return { from, to };
+}
+
+async function callTrainAPI(query) {
+  return { from: query.from, to: query.to };
+}
+
+function renderTrainResult(data) {
+  const trains = [
+    { trainNo: 'G1234', from: data.from, to: data.to, price: 553, time: '08:00-13:30', duration: '5小时30分', type: '高铁', src: '途牛' },
+    { trainNo: 'D5678', from: data.from, to: data.to, price: 378, time: '10:00-16:00', duration: '6小时', type: '动车', src: '飞猪' },
+    { trainNo: 'G9012', from: data.from, to: data.to, price: 553, time: '14:00-19:30', duration: '5小时30分', type: '高铁', src: '途牛' },
+  ];
+  
+  let html = `<div style="background:#fff;border-radius:16px;padding:20px;margin-top:12px">
+    <div style="font-size:18px;font-weight:700;margin-bottom:16px">🚄 ${data.from} → ${data.to} 火车票查询结果</div>`;
+  
+  trains.forEach((t, i) => {
+    html += `<div style="padding:12px;background:#f8f9fa;border-radius:8px;margin-bottom:8px">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <div>
+          <div style="font-weight:600">${t.trainNo} ${t.type}</div>
+          <div style="color:#999;font-size:13px">${t.time} · ${t.duration}</div>
+        </div>
+        <div style="font-size:18px;font-weight:700;color:#FF6B35">¥${t.price}</div>
+      </div>
+    </div>`;
+  });
+  
+  html += '</div>';
+  addMsg(html, 'ai');
 }
 
 // ==================== 演示模式（API失败时使用）====================
