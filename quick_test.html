@@ -1,0 +1,1937 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>🍅 番茄旅行AI - 酒店比价系统</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&family=Playfair+Display:wght@600;700&display=swap" rel="stylesheet">
+    <style>
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        :root {
+            --primary: #FF6B35;
+            --primary-dark: #E55A2B;
+            --secondary: #1A3A4A;
+            --accent: #00C9A7;
+            --bg-gradient: linear-gradient(135deg, #FFF9F5 0%, #F0FFF9 50%, #F0F5FF 100%);
+            --text-dark: #1A1A2E;
+            --text-gray: #6B7280;
+        }
+        body {
+            font-family: 'Noto Sans SC', sans-serif;
+            background: var(--bg-gradient);
+            color: var(--text-dark);
+            min-height: 100vh;
+            position: relative;
+        }
+
+        /* 背景装饰 */
+        .bg-decoration {
+            position: fixed;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 100%;
+            pointer-events: none;
+            z-index: 0;
+            overflow: hidden;
+        }
+        .bg-decoration::before {
+            content: '';
+            position: absolute;
+            top: -50%;
+            right: -20%;
+            width: 600px;
+            height: 600px;
+            background: radial-gradient(circle, rgba(255,107,53,0.08) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: float 20s ease-in-out infinite;
+        }
+        .bg-decoration::after {
+            content: '';
+            position: absolute;
+            bottom: -30%;
+            left: -10%;
+            width: 500px;
+            height: 500px;
+            background: radial-gradient(circle, rgba(0,201,167,0.08) 0%, transparent 70%);
+            border-radius: 50%;
+            animation: float 25s ease-in-out infinite reverse;
+        }
+        @keyframes float {
+            0%, 100% { transform: translate(0, 0) rotate(0deg); }
+            50% { transform: translate(30px, -30px) rotate(5deg); }
+        }
+
+        /* 导航栏 */
+        nav {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            padding: 20px 40px;
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            z-index: 100;
+            background: rgba(255,255,255,0.9);
+            backdrop-filter: blur(20px);
+            border-bottom: 1px solid rgba(255,107,53,0.1);
+            box-shadow: 0 4px 20px rgba(0,0,0,0.05);
+        }
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            font-family: 'Playfair Display', serif;
+            font-size: 22px;
+            font-weight: 700;
+            color: var(--primary);
+            text-decoration: none;
+        }
+        .logo-icon {
+            width: 42px;
+            height: 42px;
+            background: linear-gradient(135deg, var(--primary), var(--accent));
+            border-radius: 12px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 22px;
+            box-shadow: 0 4px 12px rgba(255,107,53,0.3);
+        }
+        .nav-links {
+            display: flex;
+            gap: 32px;
+            list-style: none;
+        }
+        .nav-links a {
+            text-decoration: none;
+            color: var(--text-dark);
+            font-weight: 500;
+            font-size: 14px;
+            transition: all 0.3s;
+            position: relative;
+        }
+        .nav-links a::after {
+            content: '';
+            position: absolute;
+            bottom: -4px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: var(--primary);
+            transition: width 0.3s;
+        }
+        .nav-links a:hover::after { width: 100%; }
+        .nav-links a:hover { color: var(--primary); }
+        .nav-links a.active {
+            color: var(--primary);
+            font-weight: 600;
+        }
+        .nav-links a.active::after { width: 100%; }
+
+        /* 主内容 */
+        main {
+            position: relative;
+            z-index: 1;
+            padding-top: 100px;
+            max-width: 1200px;
+            margin: 0 auto;
+            padding-left: 40px;
+            padding-right: 40px;
+            padding-bottom: 60px;
+        }
+
+        /* 头部 */
+        .header {
+            text-align: center;
+            padding: 40px 0 30px;
+        }
+        .header h1 {
+            font-family: 'Playfair Display', serif;
+            font-size: 42px;
+            font-weight: 700;
+            margin-bottom: 12px;
+            background: linear-gradient(135deg, var(--text-dark) 0%, var(--primary) 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+        .header p {
+            color: var(--text-gray);
+            font-size: 18px;
+        }
+
+        /* 服务工具栏 */
+        .tools-bar {
+            display: flex;
+            gap: 12px;
+            justify-content: center;
+            margin: 30px 0;
+            flex-wrap: wrap;
+        }
+        .tool-btn {
+            padding: 12px 24px;
+            background: #fff;
+            border: 2px solid #eee;
+            border-radius: 12px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.3s;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-dark);
+        }
+        .tool-btn:hover {
+            border-color: var(--primary);
+            background: var(--primary);
+            color: #fff;
+            transform: translateY(-2px);
+        }
+        .tool-btn.active {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: #fff;
+            border-color: var(--primary);
+        }
+
+        /* 搜索框 */
+        .search-box {
+            background: #fff;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            margin-bottom: 24px;
+        }
+        .search-row {
+            display: grid;
+            grid-template-columns: 2fr 1fr 1fr 1fr;
+            gap: 12px;
+            margin-bottom: 16px;
+        }
+        .input-group {
+            display: flex;
+            flex-direction: column;
+            gap: 6px;
+        }
+        .input-group label {
+            font-size: 12px;
+            font-weight: 600;
+            color: var(--text-gray);
+            white-space: nowrap;
+        }
+        .input-group input {
+            padding: 10px 14px;
+            border: 2px solid #eee;
+            border-radius: 8px;
+            font-size: 14px;
+            transition: border-color 0.2s;
+            width: 100%;
+        }
+        .input-group input:focus {
+            outline: none;
+            border-color: var(--primary);
+        }
+        .search-btn {
+            width: 100%;
+            padding: 14px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: #fff;
+            border: none;
+            border-radius: 12px;
+            font-size: 16px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: transform 0.2s;
+        }
+        .search-btn:hover {
+            transform: translateY(-2px);
+        }
+        .search-btn:disabled {
+            opacity: 0.6;
+            cursor: not-allowed;
+        }
+
+        /* 快捷城市 */
+        .quick-cities {
+            margin-top: 16px;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        .quick-city {
+            padding: 8px 16px;
+            background: var(--bg-gradient);
+            border: 1px solid #eee;
+            border-radius: 20px;
+            font-size: 13px;
+            font-weight: 500;
+            cursor: pointer;
+            transition: all 0.2s;
+            color: var(--text-dark);
+        }
+        .quick-city:hover {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+        }
+
+        /* 结果容器 */
+        .results-container {
+            background: #fff;
+            border-radius: 16px;
+            padding: 24px;
+            box-shadow: 0 4px 20px rgba(0,0,0,0.08);
+            min-height: 200px;
+        }
+        .loading {
+            text-align: center;
+            padding: 60px 20px;
+        }
+        .loading-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+            animation: rotate 1s linear infinite;
+        }
+        @keyframes rotate {
+            from { transform: rotate(0deg); }
+            to { transform: rotate(360deg); }
+        }
+        .loading-text {
+            color: var(--text-gray);
+            font-size: 16px;
+        }
+        .empty {
+            text-align: center;
+            padding: 60px 20px;
+            color: var(--text-gray);
+        }
+        .empty-icon {
+            font-size: 48px;
+            margin-bottom: 16px;
+        }
+
+        /* 酒店卡片 */
+        .hotel-card {
+            border: 1px solid #eee;
+            border-radius: 12px;
+            padding: 20px;
+            margin-bottom: 16px;
+            transition: all 0.2s;
+            background: #fff;
+        }
+        .hotel-card:hover {
+            box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+            transform: translateY(-2px);
+        }
+        .hotel-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: start;
+            margin-bottom: 12px;
+        }
+        .hotel-name {
+            font-size: 18px;
+            font-weight: 700;
+            color: var(--text-dark);
+            margin-bottom: 4px;
+        }
+        .hotel-info {
+            font-size: 13px;
+            color: var(--text-gray);
+            display: flex;
+            gap: 12px;
+            align-items: center;
+            flex-wrap: wrap;
+        }
+        .hotel-price {
+            text-align: right;
+        }
+        .price-current {
+            font-size: 24px;
+            font-weight: 700;
+            color: var(--primary);
+            display: block;
+        }
+        .price-period {
+            font-size: 12px;
+            color: var(--text-gray);
+        }
+
+        /* 来源标签 */
+        .source-tag {
+            padding: 4px 12px;
+            border-radius: 6px;
+            font-size: 11px;
+            font-weight: 700;
+            color: #fff;
+            display: inline-block;
+        }
+        .source-tag.tuniu {
+            background: #FF6B35;
+        }
+        .source-tag.flyai {
+            background: #E67E00;
+        }
+
+        /* 操作按钮 */
+        .action-bar {
+            display: flex;
+            gap: 10px;
+            margin-top: 20px;
+            padding: 20px;
+            background: #f9f9f9;
+            border-radius: 12px;
+        }
+        .action-btn {
+            flex: 1;
+            padding: 12px;
+            border: none;
+            border-radius: 10px;
+            font-size: 14px;
+            font-weight: 600;
+            cursor: pointer;
+            transition: all 0.2s;
+            background: #fff;
+            border: 2px solid #eee;
+            color: var(--text-dark);
+        }
+        .action-btn:hover {
+            background: var(--primary);
+            color: #fff;
+            border-color: var(--primary);
+        }
+        .action-btn.primary {
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: #fff;
+            border: none;
+        }
+
+        /* 状态显示 */
+        .status-banner {
+            background: #E8F5E9;
+            border-left: 4px solid #4CAF50;
+            padding: 16px 20px;
+            border-radius: 8px;
+            margin-bottom: 20px;
+            display: none;
+        }
+        .status-banner.show {
+            display: block;
+        }
+        .status-banner.error {
+            background: #FFEBEE;
+            border-left-color: #F44336;
+        }
+
+        /* 返回按钮 */
+        .back-btn {
+            position: fixed;
+            bottom: 30px;
+            left: 30px;
+            width: 50px;
+            height: 50px;
+            background: linear-gradient(135deg, var(--primary), var(--primary-dark));
+            color: #fff;
+            border: none;
+            border-radius: 50%;
+            font-size: 20px;
+            cursor: pointer;
+            box-shadow: 0 4px 12px rgba(255,107,53,0.3);
+            transition: all 0.2s;
+            z-index: 99;
+        }
+        .back-btn:hover {
+            transform: scale(1.1);
+        }
+
+        /* 模态框样式 */
+        .modal-overlay {
+            position: fixed;
+            top: 0;
+            left: 0;
+            right: 0;
+            bottom: 0;
+            background: rgba(0, 0, 0, 0.5);
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            z-index: 1000;
+            animation: fadeIn 0.2s ease-out;
+        }
+
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+
+        .modal-content {
+            background: white;
+            border-radius: 16px;
+            padding: 32px;
+            max-width: 540px;
+            width: 90%;
+            max-height: 85vh;
+            overflow-y: auto;
+            position: relative;
+            animation: slideUp 0.3s ease-out;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+        }
+
+        @keyframes slideUp {
+            from {
+                opacity: 0;
+                transform: translateY(20px);
+            }
+            to {
+                opacity: 1;
+                transform: translateY(0);
+            }
+        }
+
+        .modal-close {
+            position: absolute;
+            top: 16px;
+            right: 16px;
+            background: #f5f5f5;
+            border: none;
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+            font-size: 20px;
+            line-height: 1;
+            cursor: pointer;
+            transition: all 0.2s;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+        }
+
+        .modal-close:hover {
+            background: #e0e0e0;
+            transform: rotate(90deg);
+        }
+    </style>
+</head>
+<body>
+
+<!-- 背景装饰 -->
+<div class="bg-decoration"></div>
+
+<!-- 导航栏 -->
+<nav>
+    <a href="index.html" class="logo">
+        <div class="logo-icon">🍅</div>
+        <span>番茄旅行AI</span>
+    </a>
+    <ul class="nav-links">
+        <li><a href="index.html">🏠 首页</a></li>
+        <li><a href="quick_test.html" class="active">🏨 酒店比价</a></li>
+        <li><a href="ai-assistant.html">🤖 AI助手</a></li>
+        <li><a href="simple_export.html">📊 数据导出</a></li>
+        <li><a href="setup_wizard.html">⚙️ 系统设置</a></li>
+    </ul>
+</nav>
+
+<main>
+    <div class="header">
+        <h1 id="pageTitle">🏨 实时酒店比价</h1>
+        <p id="pageDesc">途牛 + 飞猪 双平台实时价格对比，一键找到最优选择</p>
+    </div>
+
+    <!-- 服务工具栏 -->
+    <div class="tools-bar">
+        <button class="tool-btn active" id="hotelBtn" onclick="switchService('hotel')">🏨 酒店比价</button>
+        <button class="tool-btn" id="flightBtn" onclick="switchService('flight')">✈️ 机票查询</button>
+        <button class="tool-btn" id="ticketBtn" onclick="switchService('ticket')">🎫 门票查询</button>
+        <button class="tool-btn" id="trainBtn" onclick="switchService('train')">🚄 火车票</button>
+        <button class="tool-btn" onclick="showFeishuSync()">📊 飞书同步</button>
+        <button class="tool-btn" onclick="showPriceTrend()">📈 价格趋势</button>
+    </div>
+
+    <!-- 状态横幅 -->
+    <div id="statusBanner" class="status-banner"></div>
+
+    <!-- 搜索框容器 -->
+    <div class="search-box">
+        <!-- 酒店搜索框 -->
+        <div id="hotelSearchBox">
+            <div class="search-row" style="grid-template-columns: 2fr 1fr 1fr 1fr 1fr; gap: 10px; margin-bottom: 0; align-items: end;">
+                <div class="input-group">
+                    <label>📍 目的地/酒店名称</label>
+                    <input type="text" id="destInput" placeholder="如：三亚、天域酒店" value="三亚">
+                </div>
+                <div class="input-group">
+                    <label>📅 入住日期</label>
+                    <input type="date" id="checkIn">
+                </div>
+                <div class="input-group">
+                    <label>📅 离店日期</label>
+                    <input type="date" id="checkOut">
+                </div>
+                <div class="input-group">
+                    <label>🛏️ 房型</label>
+                    <select id="roomType" style="padding: 10px; border: 2px solid #eee; border-radius: 8px; font-size: 14px; background: #fff;">
+                        <option value="">全部房型</option>
+                        <option value="大床房">大床房</option>
+                        <option value="双床房">双床房</option>
+                        <option value="套房">套房</option>
+                        <option value="标准间">标准间</option>
+                    </select>
+                </div>
+                <button class="search-btn" id="searchBtn" onclick="doSearch()" style="margin-bottom: 2px;">🔍 立即搜索</button>
+            </div>
+            <div class="quick-cities">
+                <span style="font-size: 13px; color: #999; margin-right: 8px">热门城市:</span>
+                <span class="quick-city" onclick="setCity('三亚')">三亚</span>
+                <span class="quick-city" onclick="setCity('普吉岛')">普吉岛</span>
+                <span class="quick-city" onclick="setCity('巴厘岛')">巴厘岛</span>
+                <span class="quick-city" onclick="setCity('新加坡')">新加坡</span>
+                <span class="quick-city" onclick="setCity('东京')">东京</span>
+                <span class="quick-city" onclick="setCity('曼谷')">曼谷</span>
+                <span class="quick-city" onclick="setCity('马尔代夫')">马尔代夫</span>
+                <span class="quick-city" onclick="setCity('迪拜')">迪拜</span>
+                <span class="quick-city" onclick="setCity('巴黎')">巴黎</span>
+                <span class="quick-city" onclick="setCity('伦敦')">伦敦</span>
+                <span class="quick-city" onclick="setCity('纽约')">纽约</span>
+                <span class="quick-city" onclick="setCity('悉尼')">悉尼</span>
+            </div>
+        </div>
+
+        <!-- 机票搜索框 -->
+        <div id="flightSearchBox" style="display: none;">
+            <div class="search-row" style="grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; margin-bottom: 0; align-items: end;">
+                <div class="input-group">
+                    <label>📍 出发城市</label>
+                    <input type="text" id="fromCity" placeholder="如：北京" value="北京">
+                </div>
+                <div class="input-group">
+                    <label>🎯 到达城市</label>
+                    <input type="text" id="toCity" placeholder="如：三亚" value="三亚">
+                </div>
+                <div class="input-group">
+                    <label>📅 出发日期</label>
+                    <input type="date" id="depDate">
+                </div>
+                <button class="search-btn" id="flightSearchBtn" onclick="doSearch()" style="margin-bottom: 2px;">🔍 立即搜索</button>
+            </div>
+        </div>
+
+        <!-- 门票搜索框 -->
+        <div id="ticketSearchBox" style="display: none;">
+            <div class="search-row" style="grid-template-columns: 2fr 1fr 1fr; gap: 10px; margin-bottom: 0; align-items: end;">
+                <div class="input-group">
+                    <label>📍 目的地 / 景点名称</label>
+                    <input type="text" id="ticketDest" placeholder="如：三亚、蜈支洲岛">
+                </div>
+                <div class="input-group">
+                    <label>📅 游玩日期</label>
+                    <input type="date" id="ticketDate">
+                </div>
+                <button class="search-btn" id="ticketSearchBtn" onclick="doSearch()" style="margin-bottom: 2px;">🔍 立即搜索</button>
+            </div>
+        </div>
+
+        <!-- 火车票搜索框 -->
+        <div id="trainSearchBox" style="display: none;">
+            <div class="search-row" style="grid-template-columns: 1fr 1fr 1fr 1fr; gap: 10px; margin-bottom: 0; align-items: end;">
+                <div class="input-group">
+                    <label>📍 出发城市</label>
+                    <input type="text" id="trainFrom" placeholder="如：北京" value="北京">
+                </div>
+                <div class="input-group">
+                    <label>🎯 到达城市</label>
+                    <input type="text" id="trainTo" placeholder="如：上海" value="上海">
+                </div>
+                <div class="input-group">
+                    <label>📅 出发日期</label>
+                    <input type="date" id="trainDate">
+                </div>
+                <button class="search-btn" id="trainSearchBtn" onclick="doSearch()" style="margin-bottom: 2px;">🔍 立即搜索</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- 历史记录 - 小卡片横向滚动 -->
+    <div style="background: #fff; border-radius: 12px; padding: 16px 20px; box-shadow: 0 4px 20px rgba(0,0,0,0.08); margin-bottom: 20px;">
+        <div style="display: flex; align-items: center; gap: 16px;">
+            <span style="font-size: 14px; font-weight: 600; color: #666; white-space: nowrap;">📋 历史记录:</span>
+            <div id="historyList" style="display: flex; gap: 10px; overflow-x: auto; flex: 1; padding: 4px 0;">
+                <div style="text-align: center; padding: 20px; color: #999; font-size: 13px;">暂无查询历史</div>
+            </div>
+            <button onclick="clearHistory()" style="padding: 6px 12px; background: #f5f5f5; border: 1px solid #eee; border-radius: 6px; cursor: pointer; font-size: 12px; white-space: nowrap;">
+                🗑️ 清空
+            </button>
+        </div>
+    </div>
+
+    <!-- 搜索结果 -->
+    <div class="results-container" id="resultsContainer">
+        <div class="empty">
+            <div class="empty-icon">🏨</div>
+            <div>请输入目的地并点击搜索</div>
+        </div>
+    </div>
+
+    <!-- 操作栏 -->
+    <div class="action-bar" id="actionBar" style="display: none;">
+        <button class="action-btn" onclick="copySingleHotel()">📋 复制选中</button>
+        <button class="action-btn" onclick="copyAllHotels()">📋 批量复制</button>
+        <button class="action-btn" onclick="toggleBreakfastFilter()" id="breakfastFilterBtn">🍳 含早筛选</button>
+        <button class="action-btn" onclick="toggleViewMode()">🔄 切换视图</button>
+        <button class="action-btn" onclick="syncToFeishu()">📊 同步飞书</button>
+        <button class="action-btn primary" onclick="exportResults()">📊 导出Excel</button>
+    </div>
+</main>
+
+<button class="back-btn" onclick="goBack()">←</button>
+
+<script>
+const API = 'http://127.0.0.1:3000';
+let currentService = 'hotel';
+let allResults = [];
+let currentQuery = {};
+let searchHistory = JSON.parse(localStorage.getItem('travelSearchHistory') || '[]');
+let viewMode = 'list'; // 'list' 或 'image'
+let platformFilter = 'all'; // 'all', 'tuniu', 'flyai'
+let breakfastFilter = false; // 是否只显示含早酒店
+
+// SPA 路由管理
+const router = {
+  currentService: 'hotel',
+
+  init() {
+    // 从 URL 读取服务参数
+    const urlParams = new URLSearchParams(window.location.search);
+    const service = urlParams.get('service') || 'hotel';
+    this.navigateToService(service, false);
+
+    // 监听浏览器后退/前进
+    window.addEventListener('popstate', (e) => {
+      if (e.state && e.state.service) {
+        this.navigateToService(e.state.service, false);
+      }
+    });
+  },
+
+  navigate(service, updateUrl = true) {
+    this.navigateToService(service, updateUrl);
+  },
+
+  navigateToService(service, updateUrl = true) {
+    this.currentService = service;
+
+    // 更新 URL（不刷新页面）
+    if (updateUrl) {
+      const url = new URL(window.location);
+      url.searchParams.set('service', service);
+      window.history.pushState({ service }, '', url);
+    }
+
+    // 直接调用全局的 switchServiceInternal 函数
+    switchServiceInternal(service);
+  }
+};
+
+// 切换视图模式
+function toggleViewMode() {
+    viewMode = viewMode === 'list' ? 'image' : 'list';
+    if (currentService === 'hotel' && allResults.length > 0) {
+        renderHotels(allResults, {});
+    }
+    showStatus(`✅ 已切换到${viewMode === 'list' ? '列表' : '图片'}视图`);
+}
+
+// 初始化
+window.onload = function() {
+    console.log('页面加载完成');
+
+    // 初始化路由
+    router.init();
+
+    // 设置日期
+    const today = new Date();
+    const tomorrow = new Date(today);
+    tomorrow.setDate(tomorrow.getDate() + 2);
+
+    const checkInInput = document.getElementById('checkIn');
+    const checkOutInput = document.getElementById('checkOut');
+
+    if (checkInInput) checkInInput.value = today.toISOString().slice(0, 10);
+    if (checkOutInput) checkOutInput.value = tomorrow.toISOString().slice(0, 10);
+
+    checkAPIStatus();
+};
+
+// 检查API状态
+async function checkAPIStatus() {
+    const banner = document.getElementById('statusBanner');
+    try {
+        const response = await fetch(`${API}/health`);
+        const data = await response.json();
+
+        if (data.status === 'ok') {
+            // 淡入显示后3秒自动隐藏
+            banner.className = 'status-banner show';
+            banner.innerHTML = '✅ 系统运行正常';
+
+            // 3秒后自动隐藏
+            setTimeout(() => {
+                banner.classList.remove('show');
+            }, 3000);
+        }
+    } catch (error) {
+        banner.className = 'status-banner show';
+        banner.innerHTML = '⚠️ 服务连接中，请稍候...';
+
+        // 重试连接
+        setTimeout(() => {
+            checkAPIStatus();
+        }, 2000);
+    }
+}
+
+// 内部服务切换函数（原有逻辑）
+function switchServiceInternal(service) {
+    currentService = service;
+
+    // 更新按钮状态
+    document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
+    const btn = document.getElementById(service + 'Btn');
+    if (btn) btn.classList.add('active');
+
+    // 隐藏所有搜索框
+    document.getElementById('hotelSearchBox').style.display = 'none';
+    document.getElementById('flightSearchBox').style.display = 'none';
+    document.getElementById('ticketSearchBox').style.display = 'none';
+    document.getElementById('trainSearchBox').style.display = 'none';
+
+    // 显示对应的搜索框
+    if (service === 'hotel') {
+        document.getElementById('hotelSearchBox').style.display = 'block';
+    } else if (service === 'flight') {
+        document.getElementById('flightSearchBox').style.display = 'block';
+    } else if (service === 'ticket') {
+        document.getElementById('ticketSearchBox').style.display = 'block';
+    } else if (service === 'train') {
+        document.getElementById('trainSearchBox').style.display = 'block';
+    }
+
+    // 更新页面标题和描述
+    const titles = {
+        hotel: { title: '🏨 实时酒店比价', desc: '途牛 + 飞猪 双平台实时价格对比，一键找到最优选择' },
+        flight: { title: '✈️ 机票查询', desc: '实时查询各大航空公司机票价格，找到最优惠航班' },
+        ticket: { title: '🎫 门票查询', desc: '热门景点门票实时比价，告别排队购票' },
+        train: { title: '🚄 火车票查询', desc: '实时查询全国火车票，高铁动车一站搞定' }
+    };
+
+    if (titles[service]) {
+        document.getElementById('pageTitle').textContent = titles[service].title;
+        document.getElementById('pageDesc').textContent = titles[service].desc;
+    }
+
+    resetResults();
+}
+
+// 对外暴露的服务切换接口（兼容原有调用）
+function switchService(service) {
+    router.navigate(service);
+}
+
+// 重置结果
+function resetResults() {
+    const container = document.getElementById('resultsContainer');
+    const icons = { hotel: '🏨', flight: '✈️', ticket: '🎫', train: '🚄' };
+    const texts = {
+        hotel: '请输入目的地并点击搜索',
+        flight: '请输入出发地和目的地并点击搜索',
+        ticket: '请输入景点名称并点击搜索',
+        train: '请输入出发地和目的地并点击搜索'
+    };
+
+    container.innerHTML = `
+        <div class="empty">
+            <div class="empty-icon">${icons[currentService]}</div>
+            <div>${texts[currentService]}</div>
+        </div>
+    `;
+
+    document.getElementById('actionBar').style.display = 'none';
+    allResults = [];
+}
+
+// 设置城市
+function setCity(city) {
+    document.getElementById('destInput').value = city;
+}
+
+// 平台筛选
+function filterPlatform(platform) {
+    platformFilter = platform;
+
+    // 如果有结果，重新渲染
+    if (allResults.length > 0) {
+        renderHotels(allResults, {});
+    }
+}
+
+// 含早筛选
+function toggleBreakfastFilter() {
+    breakfastFilter = !breakfastFilter;
+
+    // 更新按钮状态
+    const btn = document.getElementById('breakfastFilterBtn');
+    if (breakfastFilter) {
+        btn.classList.add('active');
+        btn.innerHTML = '🍳 已筛选含早';
+    } else {
+        btn.classList.remove('active');
+        btn.innerHTML = '🍳 含早筛选';
+    }
+
+    // 如果有结果，重新渲染
+    if (allResults.length > 0) {
+        renderHotels(allResults, {});
+    }
+}
+
+// 搜索
+async function doSearch() {
+    const container = document.getElementById('resultsContainer');
+
+    // 根据当前服务获取对应的按钮
+    let btnId = 'searchBtn';
+    if (currentService === 'flight') btnId = 'flightSearchBtn';
+    else if (currentService === 'ticket') btnId = 'ticketSearchBtn';
+    else if (currentService === 'train') btnId = 'trainSearchBtn';
+
+    const btn = document.getElementById(btnId);
+
+    if (btn) {
+        btn.disabled = true;
+        btn.innerHTML = '⏳ 查询中...';
+    }
+
+    container.innerHTML = `
+        <div class="loading">
+            <div class="loading-icon">🍅</div>
+            <div class="loading-text">正在查询实时数据...</div>
+        </div>
+    `;
+
+    try {
+        let result;
+
+        if (currentService === 'hotel') {
+            // 酒店查询
+            const destInput = document.getElementById('destInput');
+            const checkInInput = document.getElementById('checkIn');
+            const checkOutInput = document.getElementById('checkOut');
+
+            if (!destInput || !checkInInput || !checkOutInput) {
+                showStatus('请填写完整的搜索条件', 'error');
+                if (btn) {
+                    btn.disabled = false;
+                    btn.innerHTML = '🔍 立即搜索';
+                }
+                return;
+            }
+
+            const params = new URLSearchParams({
+                destName: destInput.value,
+                checkIn: checkInInput.value,
+                checkOut: checkOutInput.value
+            });
+
+            const response = await fetch(`${API}/api/hotel/search?${params}`);
+            const data = await response.json();
+
+            if (data.status === 0 && data.data && data.data.hotels) {
+                allResults = data.data.hotels;
+                currentQuery = {
+                    dest: destInput.value,
+                    checkIn: checkInInput.value,
+                    checkOut: checkOutInput.value
+                };
+
+                renderHotels(allResults, data.meta);
+                showStatus(`✅ 查询成功！找到 ${allResults.length} 家酒店 (途牛: ${data.meta.tuniuCount}家 | 飞猪: ${data.meta.flyaiCount}家)`);
+                document.getElementById('actionBar').style.display = 'flex';
+            } else {
+                throw new Error(data.message || '未找到相关酒店');
+            }
+
+        } else if (currentService === 'flight') {
+            // 机票查询
+            const fromCity = document.getElementById('fromCity');
+            const toCity = document.getElementById('toCity');
+            const depDate = document.getElementById('depDate');
+
+            if (!fromCity || !toCity || !depDate) {
+                showStatus('请填写完整的搜索条件', 'error');
+                return;
+            }
+
+            const response = await fetch(`${API}/api/ota/query`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    type: 'flight',
+                    fromCity: fromCity.value,
+                    toCity: toCity.value,
+                    date: depDate.value
+                })
+            });
+
+            const data = await response.json();
+            if (data.status === 0 && data.data && data.data.items) {
+                renderOTAItems('✈️ 机票查询结果', data.data.items);
+                showStatus(`✅ 查询成功！找到 ${data.data.items.length} 个航班`);
+                allResults = data.data.items;
+            } else {
+                throw new Error(data.message || '未找到相关航班');
+            }
+
+        } else if (currentService === 'ticket') {
+            // 门票查询
+            const destInput = document.getElementById('ticketDest');
+            const ticketDate = document.getElementById('ticketDate');
+
+            if (!destInput || !ticketDate) {
+                showStatus('请填写完整的搜索条件', 'error');
+                return;
+            }
+
+            const response = await fetch(`${API}/api/ota/query`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    type: 'ticket',
+                    cityName: destInput.value,
+                    scenicName: destInput.value
+                })
+            });
+
+            const data = await response.json();
+            if (data.status === 0 && data.data && data.data.items) {
+                renderOTAItems('🎫 门票查询结果', data.data.items);
+                showStatus(`✅ 查询成功！找到 ${data.data.items.length} 个门票`);
+                allResults = data.data.items;
+            } else {
+                throw new Error(data.message || '未找到相关门票');
+            }
+
+        } else if (currentService === 'train') {
+            // 火车票查询
+            const fromCity = document.getElementById('trainFrom');
+            const toCity = document.getElementById('trainTo');
+            const trainDate = document.getElementById('trainDate');
+
+            if (!fromCity || !toCity || !trainDate) {
+                showStatus('请填写完整的搜索条件', 'error');
+                return;
+            }
+
+            const response = await fetch(`${API}/api/ota/query`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                    type: 'train',
+                    fromCity: fromCity.value,
+                    toCity: toCity.value,
+                    date: trainDate.value
+                })
+            });
+
+            const data = await response.json();
+            if (data.status === 0 && data.data && data.data.items) {
+                renderOTAItems('🚄 火车票查询结果', data.data.items);
+                showStatus(`✅ 查询成功！找到 ${data.data.items.length} 个车次`);
+                allResults = data.data.items;
+            } else {
+                throw new Error(data.message || '未找到相关车次');
+            }
+        }
+
+    } catch (error) {
+        console.error('搜索错误:', error);
+        container.innerHTML = `
+            <div class="empty">
+                <div class="empty-icon">😔</div>
+                <div>查询失败: ${error.message}</div>
+            </div>
+        `;
+        showStatus('❌ 查询失败: ' + error.message, 'error');
+    } finally {
+        if (btn) {
+            btn.disabled = false;
+            btn.innerHTML = '🔍 立即搜索';
+        }
+    }
+}
+
+// 渲染OTA项目（机票、门票、火车票）
+function renderOTAItems(title, items) {
+    const container = document.getElementById('resultsContainer');
+
+    if (!items || items.length === 0) {
+        container.innerHTML = `
+            <div class="empty">
+                <div class="empty-icon">😔</div>
+                <div>暂无数据，请尝试其他条件</div>
+            </div>
+        `;
+        return;
+    }
+
+    container.innerHTML = '<div style="margin-bottom: 20px; padding: 15px; background: #f9f9f9; border-radius: 10px;">' +
+        `📊 ${title} - 共 <strong>${items.length}</strong> 条结果` +
+        '</div>' +
+        items.map((item, index) => `
+            <div class="hotel-card">
+                <div class="hotel-header">
+                    <div style="flex: 1;">
+                        <div class="hotel-name">
+                            ${index + 1}. ${item.title || item.name}
+                        </div>
+                        <div class="hotel-info">
+                            ${item.time ? `<span>⏰ ${item.time}</span>` : ''}
+                            ${item.duration ? `<span>⏱️ ${item.duration}</span>` : ''}
+                            ${item.type ? `<span>🎫 ${item.type}</span>` : ''}
+                            ${item.route ? `<span>🛳️ ${item.route}</span>` : ''}
+                        </div>
+                    </div>
+                    <div class="hotel-price">
+                        <span class="price-current">¥${item.price || '0'}</span>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 10px; margin-top: 12px; padding-top: 12px; border-top: 1px solid #f0f0f0;">
+                    <button onclick="copyOTAItem(${index})" style="flex: 1; padding: 10px; background: #f5f5f5; border: 1px solid #eee; border-radius: 8px; cursor: pointer; font-weight: 600;">
+                        📋 复制
+                    </button>
+                    <a href="${item.url || '#'}" target="_blank" style="flex: 1; padding: 10px; background: #FF6B35; color: white; border: none; border-radius: 8px; cursor: pointer; font-weight: 600; text-align: center; text-decoration: none;">
+                        预订 →
+                    </a>
+                </div>
+            </div>
+        `).join('');
+}
+
+// 复制OTA项目
+function copyOTAItem(index) {
+    if (!allResults[index]) {
+        alert('没有可复制的数据');
+        return;
+    }
+
+    const item = allResults[index];
+    const text = `项目名称: ${item.title || item.name}
+价格: ¥${item.price || '0'}
+${item.time ? `时间: ${item.time}` : ''}
+${item.duration ? `时长: ${item.duration}` : ''}
+${item.type ? `类型: ${item.type}` : ''}
+${item.route ? `路线: ${item.route}` : ''}
+链接: ${item.url || '暂无'}`;
+
+    navigator.clipboard.writeText(text).then(() => {
+        alert(`✅ 已复制第${index + 1}条信息`);
+    }).catch(() => {
+        alert('复制失败，请手动复制');
+    });
+}
+
+// 渲染酒店结果
+function renderHotels(hotels, meta) {
+    const container = document.getElementById('resultsContainer');
+
+    if (!hotels || hotels.length === 0) {
+        container.innerHTML = `
+            <div class="empty">
+                <div class="empty-icon">😔</div>
+                <div>未找到相关酒店</div>
+            </div>
+        `;
+        return;
+    }
+
+    // 应用筛选
+    let filteredHotels = hotels;
+
+    // 应用平台筛选
+    if (platformFilter === 'tuniu') {
+        filteredHotels = filteredHotels.filter(h => h.src === '途牛');
+    } else if (platformFilter === 'flyai') {
+        filteredHotels = filteredHotels.filter(h => h.src === '飞猪');
+    }
+
+    // 应用含早筛选
+    if (breakfastFilter) {
+        filteredHotels = filteredHotels.filter(h => h.meal && h.meal.includes('含早'));
+    }
+
+    // 统计途牛和飞猪数量
+    const tuniuCount = filteredHotels.filter(h => h.src === '途牛').length;
+    const flyaiCount = filteredHotels.filter(h => h.src === '飞猪').length;
+
+    // 生成结果头部，包含平台筛选
+    container.innerHTML = '<div style="margin-bottom: 16px; padding: 16px; background: #f9f9f9; border-radius: 10px;">' +
+        '<div style="display: flex; justify-content: space-between; align-items: center; margin-bottom: 12px;">' +
+        `<div>📊 找到 <strong>${filteredHotels.length}</strong> 家酒店 (途牛: ${tuniuCount}家 | 飞猪: ${flyaiCount}家)</div>` +
+        `<div style="font-size: 13px; color: #666;">当前视图: ${viewMode === 'list' ? '📋 列表' : '🖼️ 图片'}</div>` +
+        '</div>' +
+        '<div style="display: flex; gap: 8px; flex-wrap: wrap;">' +
+        `<button onclick="filterPlatform('all')" style="padding: 6px 14px; border: 1px solid #ddd; border-radius: 6px; background: ${platformFilter === 'all' ? '#FF6B35' : '#fff'}; color: ${platformFilter === 'all' ? '#fff' : '#333'}; font-size: 13px; cursor: pointer;">🏯 全部平台</button>` +
+        `<button onclick="filterPlatform('tuniu')" style="padding: 6px 14px; border: 1px solid #ddd; border-radius: 6px; background: ${platformFilter === 'tuniu' ? '#FF6B35' : '#fff'}; color: ${platformFilter === 'tuniu' ? '#fff' : '#333'}; font-size: 13px; cursor: pointer;">🏨 途牛</button>` +
+        `<button onclick="filterPlatform('flyai')" style="padding: 6px 14px; border: 1px solid #ddd; border-radius: 6px; background: ${platformFilter === 'flyai' ? '#FF6B35' : '#fff'}; color: ${platformFilter === 'flyai' ? '#fff' : '#333'}; font-size: 13px; cursor: pointer;">🐕 飞猪</button>` +
+        '</div>' +
+        '</div>';
+
+    if (viewMode === 'list') {
+        // 简洁列表视图
+        container.innerHTML += filteredHotels.map((hotel, index) => `
+            <div class="hotel-card" style="padding: 16px;">
+                <div class="hotel-header" style="margin-bottom: 8px;">
+                    <div style="flex: 1;">
+                        <div class="hotel-name" style="font-size: 16px;">
+                            ${index + 1}. ${hotel.name}
+                            <span class="source-tag ${hotel.src === '途牛' ? 'tuniu' : 'flyai'}" style="margin-left: 8px; font-size: 11px;">${hotel.src}</span>
+                            ${hotel.meal && hotel.meal.includes('含早') ? '<span style="margin-left: 8px; padding: 2px 8px; background: #E8F5E9; color: #2E7D32; border-radius: 4px; font-size: 11px;">🍳 含早</span>' : ''}
+                        </div>
+                        <div class="hotel-info" style="font-size: 12px;">
+                            ${hotel.star ? `<span>⭐ ${hotel.star}</span>` : ''}
+                            ${hotel.score ? `<span>💬 ${hotel.score}</span>` : ''}
+                            ${hotel.address ? `<span>📍 ${hotel.address}</span>` : ''}
+                            ${hotel.traffic ? `<span>🚗 ${hotel.traffic}</span>` : ''}
+                        </div>
+                    </div>
+                    <div class="hotel-price">
+                        <span class="price-current" style="font-size: 20px;">¥${hotel.price}</span>
+                        <span class="price-period">/晚</span>
+                    </div>
+                </div>
+                <div style="display: flex; gap: 8px; margin-top: 8px;">
+                    <button onclick="copySingleHotel(${index})" style="flex: 1; padding: 8px; background: #f5f5f5; border: 1px solid #eee; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600;">
+                        📋 复制
+                    </button>
+                    <a href="${generateBookingUrl(hotel, 'hotel')}" target="_blank" style="flex: 1; padding: 8px; background: #FF6B35; color: white; border: none; border-radius: 6px; cursor: pointer; font-size: 13px; font-weight: 600; text-align: center; text-decoration: none;">
+                        预订 →
+                    </a>
+                </div>
+            </div>
+        `).join('');
+    } else {
+        // 图片网格视图
+        container.innerHTML += '<div style="display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 20px;">' +
+            filteredHotels.map((hotel, index) => `
+                <div class="hotel-card" style="margin: 0;">
+                    ${hotel.pic ? `
+                    <div style="position: relative; height: 200px; margin: -20px -20px 16px -20px;">
+                        <img src="${hotel.pic}" alt="${hotel.name}" style="width: 100%; height: 100%; object-fit: cover; border-top-left-radius: 12px; border-top-right-radius: 12px;">
+                        <span class="source-tag ${hotel.src === '途牛' ? 'tuniu' : 'flyai'}" style="position: absolute; top: 12px; right: 12px;">${hotel.src}</span>
+                    </div>
+                    ` : `
+                    <div style="height: 120px; background: linear-gradient(135deg, #f5f7fa 0%, #c3cfe2 100%); margin: -20px -20px 16px -20px; border-top-left-radius: 12px; border-top-right-radius: 12px; display: flex; align-items: center; justify-content: center; font-size: 48px;">
+                        🏨
+                    </div>
+                    `}
+                    <div class="hotel-name" style="font-size: 16px; margin-bottom: 8px;">
+                        ${hotel.name}
+                        ${hotel.meal && hotel.meal.includes('含早') ? '<span style="margin-left: 8px; padding: 2px 8px; background: #E8F5E9; color: #2E7D32; border-radius: 4px; font-size: 11px;">🍳 含早</span>' : ''}
+                    </div>
+                    <div class="hotel-info" style="font-size: 12px; margin-bottom: 12px;">
+                        ${hotel.star ? `<span>⭐ ${hotel.star}</span>` : ''}
+                        ${hotel.score ? `<span>💬 ${hotel.score}</span>` : ''}
+                        ${hotel.address ? `<span>📍 ${hotel.address.substring(0, 20)}${hotel.address.length > 20 ? '...' : ''}</span>` : ''}
+                        ${hotel.traffic ? `<span>🚗 ${hotel.traffic.substring(0, 20)}${hotel.traffic.length > 20 ? '...' : ''}</span>` : ''}
+                    </div>
+                    <div class="hotel-price" style="text-align: center; margin: 12px 0;">
+                        <span class="price-current" style="font-size: 24px;">¥${hotel.price}</span>
+                        <span class="price-period">/晚</span>
+                    </div>
+                    <div style="display: flex; gap: 8px;">
+                        <button onclick="copySingleHotel(${index})" style="flex: 1; padding: 10px; background: #f5f5f5; border: 1px solid #eee; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600;">
+                            📋 复制
+                        </button>
+                        <a href="${generateBookingUrl(hotel, 'hotel')}" target="_blank" style="flex: 1; padding: 10px; background: #FF6B35; color: white; border: none; border-radius: 8px; cursor: pointer; font-size: 13px; font-weight: 600; text-align: center; text-decoration: none;">
+                            预订 →
+                        </a>
+                    </div>
+                </div>
+            `).join('') +
+        '</div>';
+    }
+}
+
+// 生成真实预订链接
+function generateBookingUrl(hotel, type) {
+    const dest = currentQuery.dest || document.getElementById('destInput')?.value || '三亚';
+    const checkIn = currentQuery.checkIn || document.getElementById('checkIn')?.value || '';
+    const checkOut = currentQuery.checkOut || document.getElementById('checkOut')?.value || '';
+    const hotelName = hotel.name || dest;
+
+    if (type === 'hotel') {
+        // 根据酒店来源生成对应的预订链接
+        if (hotel.src === '途牛') {
+            // 途牛真实预订链接 - 直接搜索页
+            return `https://hotel.tuniu.com/search/list?keyword=${encodeURIComponent(hotelName)}&checkIn=${checkIn}&checkOut=${checkOut}`;
+        } else if (hotel.src === '飞猪') {
+            // 飞猪真实预订链接 - 直接搜索页
+            return `https://hotel.fliggy.com/hotel_search.htm?keywords=${encodeURIComponent(hotelName)}&checkIn=${checkIn}&checkOut=${checkOut}`;
+        } else {
+            // 默认使用携程
+            return `https://hotels.ctrip.com/hotels/list?keyword=${encodeURIComponent(hotelName)}&checkin=${checkIn}&checkout=${checkOut}`;
+        }
+    } else if (type === 'flight') {
+        // 机票预订链接
+        const fromCity = document.getElementById('fromCity')?.value || '北京';
+        const toCity = document.getElementById('toCity')?.value || '三亚';
+        const depDate = document.getElementById('depDate')?.value || '';
+
+        return `https://flights.ctrip.com/online/channel/oneway_${fromCity}${toUrl}?date=${depDate}`;
+    } else if (type === 'ticket') {
+        // 门票预订链接 - 去目的地门票列表
+        return `https://piao.ctrip.com/ticket/${encodeURIComponent(dest)}`;
+    } else if (type === 'train') {
+        // 火车票预订链接
+        const fromStation = document.getElementById('trainFrom')?.value || '北京';
+        const toStation = document.getElementById('trainTo')?.value || '上海';
+        const trainDate = document.getElementById('trainDate')?.value || '';
+
+        return `https://train.ctrip.com/#/book/${fromStation}/${toStation}/${trainDate}`;
+    }
+
+    return '#';
+}
+
+// 显示状态
+function showStatus(message, type = 'success') {
+    const banner = document.getElementById('statusBanner');
+    banner.className = `status-banner show ${type}`;
+    banner.innerHTML = message;
+
+    setTimeout(() => {
+        banner.classList.remove('show');
+    }, 5000);
+}
+
+// 复制单个酒店
+function copySingleHotel(index) {
+    if (allResults.length === 0 || !allResults[index]) {
+        alert('没有可复制的酒店数据');
+        return;
+    }
+
+    const hotel = allResults[index];
+    const text = `酒店名称: ${hotel.name}
+英文名称: ${hotel.nameEn || '暂无'}
+来源: ${hotel.src}
+价格: ¥${hotel.price}
+星级: ${hotel.star || '暂无'}
+评分: ${hotel.score || '暂无'}
+地址: ${hotel.address || '暂无'}
+含早: ${hotel.meal || '无'}
+取消政策: ${hotel.refund || '暂无'}
+酒店图片: ${hotel.pic || '暂无'}
+预订链接: ${hotel.url || '暂无'}`;
+
+    navigator.clipboard.writeText(text).then(() => {
+        alert(`✅ 已复制第${index + 1}家酒店信息`);
+    }).catch(() => {
+        alert('复制失败，请手动复制');
+    });
+}
+
+// 批量复制全部酒店
+function copyAllHotels() {
+    if (allResults.length === 0) {
+        alert('没有可复制的酒店数据');
+        return;
+    }
+
+    const text = `🍅 番茄旅行AI - 酒店查询结果
+查询时间: ${new Date().toLocaleString()}
+目的地: ${currentQuery.dest || '未知'}
+入住: ${currentQuery.checkIn}
+离店: ${currentQuery.checkOut}
+
+${allResults.map((hotel, index) => `
+${index + 1}. ${hotel.name}
+   来源: ${hotel.src}
+   价格: ¥${hotel.price}
+   星级: ${hotel.star || '暂无'}
+   评分: ${hotel.score || '暂无'}
+   地址: ${hotel.address || '暂无'}
+   含早: ${hotel.meal || '无'}
+   取消政策: ${hotel.refund || '暂无'}
+   链接: ${hotel.url || '暂无'}
+`).join('\n')}`;
+
+    navigator.clipboard.writeText(text).then(() => {
+        alert(`✅ 已复制 ${allResults.length} 家酒店信息`);
+    }).catch(() => {
+        alert('复制失败，请手动复制');
+    });
+}
+
+// 导出数据
+function exportData() {
+    window.location.href = 'simple_export.html';
+}
+
+// 导出结果
+function exportResults() {
+    if (allResults.length === 0) {
+        alert('没有可导出的数据');
+        return;
+    }
+
+    // 转换为CSV格式
+    const headers = ['排名', '酒店名称', '价格', '星级', '评分', '地址', '含早', '取消政策', '来源', '链接'];
+    let csvContent = headers.join(',') + '\n';
+
+    allResults.forEach((hotel, index) => {
+        const row = [
+            index + 1,
+            `"${hotel.name}"`,
+            hotel.price,
+            `"${hotel.star || ''}"`,
+            `"${hotel.score || ''}"`,
+            `"${(hotel.address || '').replace(/"/g, '""')}"`,
+            `"${hotel.meal || ''}"`,
+            `"${hotel.refund || ''}"`,
+            hotel.src,
+            `"${hotel.url || ''}"`
+        ];
+        csvContent += row.join(',') + '\n';
+    });
+
+    // 创建下载
+    const blob = new Blob(['\ufeff' + csvContent], { type: 'text/csv;charset=utf-8;' });
+    const link = document.createElement('a');
+    const fileName = `番茄旅行酒店_${currentQuery.dest}_${new Date().toISOString().slice(0, 10)}.csv`;
+
+    link.href = URL.createObjectURL(blob);
+    link.download = fileName;
+    link.click();
+
+    showStatus(`✅ 已导出 ${allResults.length} 家酒店数据到: ${fileName}`);
+}
+
+// ====== 新增功能：历史记录 ======
+
+// 添加到历史记录
+function addToHistory(service, query) {
+    const historyItem = {
+        type: service,
+        query: query,
+        timestamp: Date.now(),
+        id: Date.now().toString()
+    };
+
+    searchHistory.unshift(historyItem);
+    if (searchHistory.length > 10) searchHistory.pop(); // 只保留最近10条
+    localStorage.setItem('travelSearchHistory', JSON.stringify(searchHistory));
+    updateHistoryDisplay();
+}
+
+// 更新历史记录显示
+function updateHistoryDisplay() {
+    const historyList = document.getElementById('historyList');
+    if (!historyList) return;
+
+    if (searchHistory.length === 0) {
+        historyList.innerHTML = '<div style="text-align: center; padding: 20px; color: #999; font-size: 13px;">暂无查询历史</div>';
+        return;
+    }
+
+    const typeIcons = {
+        'hotel': '🏨',
+        'flight': '✈️',
+        'ticket': '🎫',
+        'train': '🚄'
+    };
+
+    historyList.innerHTML = searchHistory.slice(0, 10).map(item => `
+        <div style="flex-shrink: 0; padding: 8px 14px; background: #f9f9f9; border: 1px solid #eee; border-radius: 20px; cursor: pointer; transition: all 0.2s; white-space: nowrap; display: flex; align-items: center; gap: 6px; font-size: 13px; color: #333;"
+             onmouseover="this.style.background='#FF6B35'; this.style.color='#fff'; this.style.borderColor='#FF6B35'"
+             onmouseout="this.style.background='#f9f9f9'; this.style.color='#333'; this.style.borderColor='#eee'"
+             onclick="repeatSearch('${item.type}', '${item.query.replace(/'/g, "\\'")}')">
+            <span>${typeIcons[item.type] || '📋'}</span>
+            <span style="max-width: 150px; overflow: hidden; text-overflow: ellipsis;">${item.query}</span>
+        </div>
+    `).join('');
+}
+
+// 格式化时间
+function formatTime(timestamp) {
+    const now = Date.now();
+    const diff = now - timestamp;
+    const minutes = Math.floor(diff / 60000);
+    const hours = Math.floor(diff / 3600000);
+    const days = Math.floor(diff / 86400000);
+
+    if (minutes < 60) return `${minutes}分钟前`;
+    if (hours < 24) return `${hours}小时前`;
+    if (days < 7) return `${days}天前`;
+    return new Date(timestamp).toLocaleDateString('zh-CN');
+}
+
+// 重复搜索
+function repeatSearch(service, query) {
+    switchService(service);
+
+    if (service === 'hotel') {
+        document.getElementById('destInput').value = query;
+    } else if (service === 'flight') {
+        const parts = query.split('→');
+        if (parts.length === 2) {
+            document.getElementById('fromCity').value = parts[0].trim();
+            document.getElementById('toCity').value = parts[1].trim();
+        }
+    } else if (service === 'ticket') {
+        document.getElementById('ticketDest').value = query;
+    } else if (service === 'train') {
+        const parts = query.split('→');
+        if (parts.length === 2) {
+            document.getElementById('trainFrom').value = parts[0].trim();
+            document.getElementById('trainTo').value = parts[1].trim();
+        }
+    }
+
+    // 自动搜索
+    setTimeout(() => doSearch(), 500);
+}
+
+// 删除历史记录项
+function deleteHistoryItem(id) {
+    searchHistory = searchHistory.filter(item => item.id !== id);
+    localStorage.setItem('travelSearchHistory', JSON.stringify(searchHistory));
+    updateHistoryDisplay();
+}
+
+// 清空历史
+function clearHistory() {
+    if (confirm('确定要清空所有历史记录吗？')) {
+        searchHistory = [];
+        localStorage.setItem('travelSearchHistory', JSON.stringify(searchHistory));
+        updateHistoryDisplay();
+        showStatus('✅ 已清空历史记录');
+    }
+}
+
+// 切换历史记录显示
+function toggleHistory() {
+    const historyList = document.getElementById('historyList');
+    const historyToggleIcon = document.getElementById('historyToggleIcon');
+
+    if (historyList.style.maxHeight === '0px') {
+        historyList.style.maxHeight = '300px';
+        historyList.style.overflow = 'auto';
+        historyToggleIcon.textContent = '▼';
+    } else {
+        historyList.style.maxHeight = '0px';
+        historyList.style.overflow = 'hidden';
+        historyToggleIcon.textContent = '▶';
+    }
+}
+
+// ====== 新增功能：飞书同步 ======
+
+// 显示飞书同步面板（模态框）
+function showFeishuSync() {
+    if (allResults.length === 0) {
+        alert('请先进行查询，然后再同步到飞书');
+        return;
+    }
+
+    // 创建模态框
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">×</button>
+            <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">📊 同步到飞书多维表格</h3>
+
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #666;">表格名称</label>
+                <input type="text" id="feishuTableName" placeholder="如：酒店价格数据"
+                    style="width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 10px; font-size: 14px;"
+                    value="番茄旅行-${currentService}-${new Date().toISOString().slice(0, 10)}">
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #666;">数据说明</label>
+                <textarea id="feishuTableDesc" placeholder="数据说明..."
+                    style="width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 10px; font-size: 14px; min-height: 80px;">${currentService === 'hotel' ? '酒店比价数据' : currentService === 'flight' ? '机票查询数据' : currentService === 'ticket' ? '门票价格数据' : '火车票数据'}</textarea>
+            </div>
+
+            <div style="display: flex; gap: 12px;">
+                <button onclick="executeFeishuSync(); this.closest('.modal-overlay').remove();" style="flex: 1; padding: 14px; background: linear-gradient(135deg, #00C9A7, #00a090); color: #fff; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer;">
+                    📤 立即同步
+                </button>
+                <button onclick="this.closest('.modal-overlay').remove()" style="flex: 1; padding: 14px; background: #fff; border: 2px solid #eee; color: #666; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer;">
+                    取消
+                </button>
+            </div>
+
+            <div style="background: #f8f9fa; padding: 16px; border-radius: 12px; font-size: 13px; color: #666; margin-top: 20px;">
+                <p><strong>💡 使用说明：</strong></p>
+                <ol style="margin-left: 20px; line-height: 1.8;">
+                    <li>首次使用需要配置飞书CLI：<code>lark-cli config init</code></li>
+                    <li>登录飞书账号：<code>lark-cli auth login</code></li>
+                    <li>点击"立即同步"自动创建多维表格并推送数据</li>
+                    <li>支持增量同步，不会覆盖已有数据</li>
+                </ol>
+            </div>
+        </div>
+    `;
+
+    // 点击背景关闭模态框
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    });
+
+    document.body.appendChild(modal);
+}
+
+// 执行飞书同步
+async function executeFeishuSync() {
+    try {
+        const tableName = document.getElementById('feishuTableName').value;
+        const tableDesc = document.getElementById('feishuTableDesc').value;
+
+        if (!tableName) {
+            alert('请输入表格名称');
+            return;
+        }
+
+        const container = document.getElementById('resultsContainer');
+        container.innerHTML = `
+            <div class="loading">
+                <div class="loading-icon">📊</div>
+                <div class="loading-text">正在同步到飞书多维表格...</div>
+            </div>
+        `;
+
+        // 准备数据
+        const records = allResults.map(item => {
+            if (currentService === 'hotel') {
+                return {
+                    '酒店名称': item.name,
+                    '价格': item.price,
+                    '星级': item.star || '',
+                    '地址': item.address || '',
+                    '评分': item.score || '',
+                    '来源': item.src,
+                    '查询日期': new Date().toISOString().slice(0, 10),
+                    '入住日期': currentQuery.checkIn || '',
+                    '离店日期': currentQuery.checkOut || ''
+                };
+            } else {
+                return {
+                    '名称': item.title || item.name,
+                    '价格': item.price || 0,
+                    '详情': item.time || item.type || '',
+                    '链接': item.url || ''
+                };
+            }
+        });
+
+        const response = await fetch(`${API}/api/feishu/sync`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                tableName,
+                tableDesc,
+                records,
+                toolType: currentService
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.status === 0) {
+            const tableUrl = result.data.tableUrl || result.data.url || '';
+            const recordCount = result.data.recordCount || records.length;
+
+            container.innerHTML = `
+                <div style="text-align: center; padding: 60px 20px;">
+                    <div style="font-size: 64px; margin-bottom: 20px;">✅</div>
+                    <h3 style="margin-bottom: 12px;">同步成功！</h3>
+                    <p style="color: #666; margin-bottom: 20px;">已创建飞书多维表格 <strong>${tableName}</strong></p>
+                    <p style="color: #00C9A7; font-size: 14px;">已同步 ${recordCount} 条记录</p>
+                    ${tableUrl ? `
+                    <a href="${tableUrl}" target="_blank" style="display: inline-block; margin-top: 16px; padding: 12px 24px; background: linear-gradient(135deg, #00C9A7, #00B598); color: #fff; text-decoration: none; border-radius: 10px; font-size: 14px; font-weight: 600;">
+                        📊 查看飞书表格
+                    </a>
+                    ` : ''}
+                    <button onclick="resetResults()" style="margin-top: 20px; padding: 12px 24px; background: linear-gradient(135deg, #FF6B35, #E55A2B); color: #fff; border: none; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer;">
+                        继续查询
+                    </button>
+                </div>
+            `;
+        } else {
+            throw new Error(result.message || '同步失败');
+        }
+
+    } catch (error) {
+        console.error('飞书同步错误:', error);
+        document.getElementById('resultsContainer').innerHTML = `
+            <div style="text-align: center; padding: 60px 20px;">
+                <div style="font-size: 64px; margin-bottom: 20px;">⚠️</div>
+                <h3 style="margin-bottom: 12px;">同步失败</h3>
+                <p style="color: #666; margin-bottom: 20px;">${error.message}</p>
+                <div style="background: #fff3cd; padding: 16px; border-radius: 10px; text-align: left; font-size: 13px;">
+                    <p><strong>💡 解决方案：</strong></p>
+                    <ol style="margin-left: 20px; line-height: 1.8;">
+                        <li>确保已安装飞书CLI：<code>npm install -g @larksuite/cli</code></li>
+                        <li>配置飞书CLI：<code>lark-cli config init</code></li>
+                        <li>登录飞书：<code>lark-cli auth login</code></li>
+                        <li>确保后端API服务正在运行</li>
+                    </ol>
+                </div>
+                <button onclick="showFeishuSync()" style="margin-top: 20px; padding: 12px 24px; background: #fff; border: 2px solid #eee; color: #666; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer;">
+                    返回
+                </button>
+            </div>
+        `;
+    }
+}
+
+// 同步到飞书（从操作栏调用）
+async function syncToFeishu() {
+    if (allResults.length === 0) {
+        alert('没有可同步的数据');
+        return;
+    }
+    showFeishuSync();
+}
+
+// ====== 新增功能：价格趋势 ======
+
+// 显示价格趋势面板（模态框）
+function showPriceTrend() {
+    // 创建模态框
+    const modal = document.createElement('div');
+    modal.className = 'modal-overlay';
+    modal.innerHTML = `
+        <div class="modal-content">
+            <button class="modal-close" onclick="this.closest('.modal-overlay').remove()">×</button>
+            <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">📈 价格趋势分析</h3>
+            <p style="color: #666; margin-bottom: 20px;">查看${currentService === 'hotel' ? '酒店' : currentService === 'flight' ? '机票' : currentService === 'ticket' ? '门票' : '火车票'}价格走势，找到最佳预订时机</p>
+
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #666;">📅 选择日期范围</label>
+                <div style="display: flex; gap: 12px;">
+                    <div style="flex: 1;">
+                        <label style="font-size: 12px; color: #666;">开始日期</label>
+                        <input type="date" id="trendStartDate" style="width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 10px; font-size: 14px;">
+                    </div>
+                    <div style="flex: 1;">
+                        <label style="font-size: 12px; color: #666;">结束日期</label>
+                        <input type="date" id="trendEndDate" style="width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 10px; font-size: 14px;">
+                    </div>
+                </div>
+            </div>
+
+            <div style="margin-bottom: 20px;">
+                <label style="display: block; margin-bottom: 8px; font-weight: 600; color: #666;">📍 目的地</label>
+                <input type="text" id="trendDest" placeholder="如：三亚"
+                    style="width: 100%; padding: 12px; border: 2px solid #eee; border-radius: 10px; font-size: 14px;"
+                    value="${currentQuery.dest || document.getElementById('destInput')?.value || '三亚'}">
+            </div>
+
+            <button onclick="analyzeTrend(); this.closest('.modal-overlay').remove();" style="width: 100%; padding: 14px; background: linear-gradient(135deg, #FF6B35, #E55A2B); color: #fff; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer;">
+                📊 分析价格趋势
+            </button>
+
+            <div style="background: #f8f9fa; padding: 16px; border-radius: 12px; font-size: 13px; color: #666; margin-top: 20px;">
+                <p><strong>💡 功能说明：</strong></p>
+                <ul style="margin-left: 20px; line-height: 1.8;">
+                    <li>分析指定日期范围内的价格波动</li>
+                    <li>识别价格低谷和高峰时段</li>
+                    <li>推荐最佳预订时机</li>
+                    <li>支持未来30天的价格预测</li>
+                </ul>
+            </div>
+        </div>
+    `;
+
+    // 设置默认日期
+    const today = new Date();
+    const nextWeek = new Date(today);
+    nextWeek.setDate(nextWeek.getDate() + 7);
+
+    // 延迟设置值，确保DOM已创建
+    setTimeout(() => {
+        const startDateInput = document.getElementById('trendStartDate');
+        const endDateInput = document.getElementById('trendEndDate');
+        if (startDateInput) startDateInput.value = today.toISOString().slice(0, 10);
+        if (endDateInput) endDateInput.value = nextWeek.toISOString().slice(0, 10);
+    }, 0);
+
+    // 点击背景关闭模态框
+    modal.addEventListener('click', (e) => {
+        if (e.target === modal) {
+            modal.remove();
+        }
+    });
+
+    document.body.appendChild(modal);
+}
+
+// 分析价格趋势
+async function analyzeTrend() {
+    try {
+        const startDate = document.getElementById('trendStartDate').value;
+        const endDate = document.getElementById('trendEndDate').value;
+        const dest = document.getElementById('trendDest').value;
+
+        if (!startDate || !endDate || !dest) {
+            alert('请填写完整的查询条件');
+            return;
+        }
+
+        const container = document.getElementById('resultsContainer');
+        container.innerHTML = `
+            <div class="loading">
+                <div class="loading-icon">📈</div>
+                <div class="loading-text">正在分析${dest}的价格趋势...</div>
+            </div>
+        `;
+
+        // 调用后端API分析趋势
+        const response = await fetch(`${API}/api/ota/trend`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                toolType: currentService,
+                dest,
+                startDate,
+                endDate
+            })
+        });
+
+        const result = await response.json();
+
+        if (result.status === 0 && result.data) {
+            renderTrendChart(result.data);
+        } else {
+            throw new Error(result.message || '分析失败');
+        }
+
+    } catch (error) {
+        console.error('趋势分析错误:', error);
+        document.getElementById('resultsContainer').innerHTML = `
+            <div style="text-align: center; padding: 60px 20px;">
+                <div style="font-size: 64px; margin-bottom: 20px;">⚠️</div>
+                <h3 style="margin-bottom: 12px;">分析失败</h3>
+                <p style="color: #666; margin-bottom: 20px;">${error.message}</p>
+                <button onclick="showPriceTrend()" style="margin-top: 20px; padding: 12px 24px; background: #fff; border: 2px solid #eee; color: #666; border-radius: 10px; font-size: 14px; font-weight: 600; cursor: pointer;">
+                    返回
+                </button>
+            </div>
+        `;
+    }
+}
+
+// 渲染趋势图表
+function renderTrendChart(data) {
+    const container = document.getElementById('resultsContainer');
+    const { trend, recommendations } = data;
+
+    const avgPrice = Math.round(trend.reduce((sum, item) => sum + item.price, 0) / trend.length);
+    const minPrice = Math.min(...trend.map(item => item.price));
+    const maxPrice = Math.max(...trend.map(item => item.price));
+
+    container.innerHTML = `
+        <div style="padding: 20px;">
+            <h3 style="font-size: 20px; font-weight: 700; margin-bottom: 20px;">📈 价格趋势分析结果</h3>
+
+            <div style="display: grid; grid-template-columns: repeat(3, 1fr); gap: 16px; margin: 20px 0;">
+                <div style="background: #f8f9fa; padding: 16px; border-radius: 12px; text-align: center;">
+                    <div style="font-size: 12px; color: #666; margin-bottom: 8px;">平均价格</div>
+                    <div style="font-size: 24px; font-weight: 700; color: #FF6B35;">¥${avgPrice}</div>
+                </div>
+                <div style="background: #f8f9fa; padding: 16px; border-radius: 12px; text-align: center;">
+                    <div style="font-size: 12px; color: #666; margin-bottom: 8px;">最低价格</div>
+                    <div style="font-size: 24px; font-weight: 700; color: #00C9A7;">¥${minPrice}</div>
+                </div>
+                <div style="background: #f8f9fa; padding: 16px; border-radius: 12px; text-align: center;">
+                    <div style="font-size: 12px; color: #666; margin-bottom: 8px;">最高价格</div>
+                    <div style="font-size: 24px; font-weight: 700; color: #E55A2B;">¥${maxPrice}</div>
+                </div>
+            </div>
+
+            <div style="margin: 20px 0;">
+                <h4 style="margin-bottom: 12px;">📊 价格走势</h4>
+                <div style="background: #fff; border: 1px solid #eee; border-radius: 12px; padding: 20px; min-height: 200px;">
+                    ${trend.map((item, index) => {
+                        const barWidth = ((item.price - minPrice) / (maxPrice - minPrice || 1)) * 100;
+                        const barColor = item.price <= avgPrice * 0.9 ? '#00C9A7' : item.price >= avgPrice * 1.1 ? '#E55A2B' : '#FF6B35';
+                        return `
+                            <div style="display: flex; align-items: center; margin-bottom: 8px;">
+                                <div style="width: 100px; font-size: 12px; color: #666;">${item.date}</div>
+                                <div style="flex: 1; height: 24px; background: #f0f0f0; border-radius: 4px; overflow: hidden; position: relative;">
+                                    <div style="width: ${barWidth}%; height: 100%; background: ${barColor}; transition: width 0.3s;"></div>
+                                </div>
+                                <div style="width: 80px; text-align: right; font-weight: 600; font-size: 14px;">¥${item.price}</div>
+                            </div>
+                        `;
+                    }).join('')}
+                </div>
+            </div>
+
+            <div style="background: #e8f5e9; padding: 16px; border-radius: 12px; margin: 20px 0;">
+                <h4 style="margin-bottom: 12px; color: #2e7d32;">💡 预订建议</h4>
+                <ul style="line-height: 1.8; color: #1b5e20;">
+                    ${recommendations.map(rec => `<li>${rec}</li>`).join('')}
+                </ul>
+            </div>
+
+            <button onclick="resetResults()" style="width: 100%; padding: 14px; background: linear-gradient(135deg, #FF6B35, #E55A2B); color: #fff; border: none; border-radius: 12px; font-size: 16px; font-weight: 600; cursor: pointer;">
+                继续查询
+            </button>
+        </div>
+    `;
+}
+
+// 修改搜索函数，添加历史记录
+const originalDoSearch = doSearch;
+doSearch = async function() {
+    const result = await originalDoSearch.apply(this, arguments);
+
+    // 搜索成功后添加到历史记录
+    if (allResults.length > 0) {
+        let query = '';
+        if (currentService === 'hotel') {
+            query = document.getElementById('destInput').value;
+        } else if (currentService === 'flight') {
+            const from = document.getElementById('fromCity').value;
+            const to = document.getElementById('toCity').value;
+            query = `${from}→${to}`;
+        } else if (currentService === 'ticket') {
+            query = document.getElementById('ticketDest').value;
+        } else if (currentService === 'train') {
+            const from = document.getElementById('trainFrom').value;
+            const to = document.getElementById('trainTo').value;
+            query = `${from}→${to}`;
+        }
+        addToHistory(currentService, query);
+    }
+
+    return result;
+};
+
+// 返回
+function goBack() {
+    if (confirm('确定要返回首页吗？')) {
+        window.location.href = 'index.html';
+    }
+}
+</script>
+</body>
+</html>
