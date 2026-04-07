@@ -12,7 +12,7 @@ console.error('[DEBUG] Args:', args);
 
 // 调用途牛CLI
 const child = spawn('tuniu', ['call', 'hotel', 'tuniu_hotel_search', '--args', args], {
-    env: { ...process.env, TUNIU_API_KEY: 'sk-287d9cbde8184f59a9bc957c85520ee3' },
+    env: { ...process.env, TUNIU_API_KEY: process.env.TUNIU_API_KEY || '' },
     shell: true
 });
 

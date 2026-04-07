@@ -1,0 +1,69 @@
+# 依赖
+node_modules/
+
+# 敏感配置文件（含账号密码，绝不上传）
+.env
+.env.local
+.env.production
+.env.*.local
+
+# 数据文件（含用户信息）
+data/membership.json
+data/*.json
+
+# 日志
+*.log
+logs/
+
+# 测试文件和临时文件
+*.test.html
+*.test.js
+test_*.js
+*_test.js
+debug*.html
+diagnose*.html
+diagnostic.html
+offline-test.html
+quick_test.html
+simple_test.html
+simple*.html
+simple*.js
+check*.bat
+test*.bat
+fix*.bat
+verify*.bat
+final*.bat
+start*.bat
+restart*.bat
+install*.bat
+config*.bat
+
+# 文档草稿和备份
+*.bak
+*.bak2
+*.backup
+*_backup.*
+README_*.md
+AI-*.md
+BUG_*.md
+CRITICAL_*.md
+DELIVERY-*.md
+FIXES-*.md
+URGENT-*.md
+QUICK-START-*.md
+已完成*.md
+新功能*.md
+系统使用*.md
+最终*.md
+完整*.md
+测试报告*.md
+
+# 系统文件
+.DS_Store
+Thumbs.db
+.preload.js
+main.js
+
+# 其他临时文件
+.zip
+.workbuddy/

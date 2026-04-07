@@ -126,10 +126,11 @@ footer{text-align:center;padding:40px;color:#999;font-size:14px}
         <span>番茄旅行AI</span>
     </a>
     <ul class="nav-links">
-        <li><a href="index.html">首页</a></li>
-        <li><a href="hotel-price.html" style="color:var(--p);font-weight:600">🏨 酒店比价</a></li>
+        <li><a href="index.html">🏠 首页</a></li>
+        <li><a href="quick_test.html" class="active">🏨 酒店系统</a></li>
         <li><a href="ai-assistant.html">🤖 AI助手</a></li>
-        <li><a href="analytics.html">📊 数据分析</a></li>
+        <li><a href="membership.html">💎 会员</a></li>
+        <li><a href="admin-panel.html">📊 管理后台</a></li>
     </ul>
 </nav>
 
@@ -140,10 +141,10 @@ footer{text-align:center;padding:40px;color:#999;font-size:14px}
     </div>
 
     <div class="tools-bar">
-        <button class="tool-btn active" onclick="switchTool('hotel')">🏨 酒店比价</button>
-        <button class="tool-btn" onclick="switchTool('flight')">✈️ 机票查询</button>
-        <button class="tool-btn" onclick="switchTool('ticket')">🎫 门票查询</button>
-        <button class="tool-btn" onclick="switchTool('train')">🚄 火车票</button>
+        <button class="tool-btn active" onclick="switchTool('hotel', this)">🏨 酒店比价</button>
+        <button class="tool-btn" onclick="switchTool('flight', this)">✈️ 机票查询</button>
+        <button class="tool-btn" onclick="switchTool('ticket', this)">🎫 门票查询</button>
+        <button class="tool-btn" onclick="switchTool('train', this)">🚄 火车票</button>
         <button class="tool-btn" onclick="syncToFeishu()">📊 飞书同步</button>
         <button class="tool-btn" onclick="showPriceTrend()">📈 价格趋势</button>
     </div>
@@ -219,10 +220,8 @@ footer{text-align:center;padding:40px;color:#999;font-size:14px}
 </footer>
 
 <script>
-// API地址 - 自动检测环境
-const API = (window.location.hostname === 'localhost' || window.location.hostname === '127.0.0.1')
-    ? 'http://localhost:3000'
-    : window.location.origin;
+// API地址 - 固定为本地API服务器
+const API = 'http://127.0.0.1:3000';
 
 let allHotels = [];
 let currentFilter = 'all';
@@ -252,10 +251,12 @@ function setCity(city) {
 }
 
 // 切换工具
-function switchTool(tool) {
+function switchTool(tool, element) {
     document.querySelectorAll('.tool-btn').forEach(btn => btn.classList.remove('active'));
-    event.target.classList.add('active');
-    
+    if (element) {
+        element.classList.add('active');
+    }
+
     if (tool === 'hotel') {
         document.getElementById('destInput').placeholder = '如：三亚、巴厘岛、希尔顿';
     } else if (tool === 'flight') {
@@ -280,7 +281,7 @@ async function searchFlight() {
     container.innerHTML = '<div class="loading"><div class="loading-icon">🍅</div><div class="loading-text">正在查询机票价格...</div></div>';
     
     try {
-        const res = await fetch(`${API}/api/query?type=flight&fromCity=${encodeURIComponent(from || '北京')}&toCity=${encodeURIComponent(to || '三亚')}&date=${date}`);
+        const res = await fetch(`${API}/api/ota/query?type=flight&fromCity=${encodeURIComponent(from || '北京')}&toCity=${encodeURIComponent(to || '三亚')}&date=${date}`);
         const data = await res.json();
         
         if (data.status === 0 && data.data?.flights) {
@@ -300,7 +301,7 @@ async function searchTicket() {
     container.innerHTML = '<div class="loading"><div class="loading-icon">🍅</div><div class="loading-text">正在查询门票价格...</div></div>';
     
     try {
-        const res = await fetch(`${API}/api/query?type=ticket&destName=${encodeURIComponent(dest)}&date=${date}`);
+        const res = await fetch(`${API}/api/ota/query?type=ticket&destName=${encodeURIComponent(dest)}&date=${date}`);
         const data = await res.json();
         
         if (data.status === 0 && data.data?.tickets) {
@@ -321,7 +322,7 @@ async function searchTrain() {
     container.innerHTML = '<div class="loading"><div class="loading-icon">🍅</div><div class="loading-text">正在查询火车票...</div></div>';
     
     try {
-        const res = await fetch(`${API}/api/query?type=train&fromCity=${encodeURIComponent(from || '北京')}&toCity=${encodeURIComponent(to || '上海')}&date=${date}`);
+        const res = await fetch(`${API}/api/ota/query?type=train&fromCity=${encodeURIComponent(from || '北京')}&toCity=${encodeURIComponent(to || '上海')}&date=${date}`);
         const data = await res.json();
         
         if (data.status === 0 && data.data?.trains) {
@@ -435,9 +436,25 @@ async function searchHotels() {
     `;
 
     try {
-        const res = await fetch(`${API}/api/hotel/search?destName=${encodeURIComponent(dest)}&checkIn=${checkIn}&checkOut=${checkOut}`);
+        console.log('开始搜索:', { dest, checkIn, checkOut });
+        console.log('API地址:', API);
+
+        const res = await fetch(`${API}/api/ota/query`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+                type: 'hotel',
+                destName: dest,
+                checkIn: checkIn,
+                checkOut: checkOut
+            })
+        });
+
+        console.log('响应状态:', res.status);
+
         const data = await res.json();
-        
+        console.log('响应数据:', data);
+
         if (data.status === 0 && data.data?.hotels) {
             allHotels = data.data.hotels;
             renderResults(data.meta);
@@ -447,9 +464,13 @@ async function searchHotels() {
             container.innerHTML = `<div style="text-align:center;padding:60px 20px;color:#999"><div style="font-size:60px;margin-bottom:20px">😔</div><div>未找到相关酒店，请尝试其他关键词</div></div>`;
         }
     } catch (e) {
+        console.error('搜索错误:', e);
         container.innerHTML = `<div style="text-align:center;padding:60px 20px;color:#E53935">
             <div style="font-size:60px;margin-bottom:20px">⚠️</div>
             <div>查询失败: ${e.message}</div>
+            <div style="margin-top:20px;font-size:14px;color:#666">
+                请确保API服务器正在运行: node hotel-api-server.js
+            </div>
             <button onclick="searchHotels()" style="margin-top:20px;padding:12px 24px;background:var(--p);color:#fff;border:none;border-radius:10px;cursor:pointer">重试</button>
         </div>`;
     }

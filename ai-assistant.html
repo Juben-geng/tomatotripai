@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>🍅 番茄旅行AI助手 - OTA实时比价</title>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+SC:wght@300;400;500;700&display=swap" rel="stylesheet">
 <style>
 *{margin:0;padding:0;box-sizing:border-box}
 :root{
@@ -13,7 +12,7 @@
   --g:#6B7280;--b:rgba(26,58,74,0.1);
   --r:#E53935;--gr:#2E7D32;
 }
-body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--t);height:100vh;overflow:hidden}
+body{font-family:"Microsoft YaHei","PingFang SC","Helvetica Neue",Arial,sans-serif;background:var(--bg);color:var(--t);height:100vh;overflow:hidden}
 
 /* === 顶部导航 === */
 .topbar{
@@ -32,10 +31,16 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--t);h
 .skill-badge.ready{background:#E8F5E9;color:#2E7D32}
 .skill-badge.loading{background:#FFF3E0;color:#E65100;animation:pulse 1.5s infinite}
 .skill-badge.error{background:#FFEBEE;color:#C62828}
+.member-info{display:flex;align-items:center;gap:10px}
+.points-display{font-size:13px;font-weight:600;color:#FF6B35}
+.check-points-btn{padding:6px 12px;background:#00C9A7;color:white;border:none;border-radius:6px;cursor:pointer;font-size:12px;font-weight:600}
+.check-points-btn:hover{background:#00B894}
 @keyframes pulse{0%,100%{opacity:1}50%{opacity:0.6}}
 
 /* === 主布局 === */
-.main{display:grid;grid-template-columns:300px 1fr;height:calc(100vh - 60px);margin-top:60px}
+.main{display:-ms-flexbox;display:flex;-ms-flex-direction:row;flex-direction:row;height:calc(100vh - 60px);margin-top:60px}
+.sidebar{width:300px;-ms-flex:0 0 300px;flex:0 0 300px}
+.content-area{-ms-flex:1;flex:1}
 
 /* === 左侧边栏 === */
 .sidebar{background:#fff;border-right:1px solid var(--b);display:flex;flex-direction:column;overflow:hidden}
@@ -65,7 +70,8 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--t);h
 /* 工具栏侧边 */
 .tools-panel{padding:16px;border-top:1px solid var(--b);flex-shrink:0}
 .tools-title{font-size:12px;color:var(--g);margin-bottom:8px;font-weight:600}
-.tools-grid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tools-grid{display:-ms-flexbox;display:flex;-ms-flex-wrap:wrap;flex-wrap:wrap;margin:-4px}
+.tool-card{-ms-flex:0 0 calc(50% - 8px);flex:0 0 calc(50% - 8px);margin:4px}
 .tool-card{padding:10px;background:#f8f9fa;border-radius:8px;cursor:pointer;transition:all 0.2s;text-align:center;border:1.5px solid transparent}
 .tool-card:hover{border-color:var(--p);background:#fff}
 .tool-card.active{border-color:var(--a);background:#E0F7FA}
@@ -254,6 +260,10 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--t);h
   </nav>
   <div class="topright">
     <span class="skill-badge" id="skillBadge">🎯 检查OTA技能...</span>
+    <div class="member-info" id="memberBar" style="display:none;">
+      <span class="points-display" id="pointsDisplay">💰 0积分</span>
+      <button class="check-points-btn" onclick="showPointsDetails()">查看详情</button>
+    </div>
     <a href="index.html" class="navbtn" style="border:1px solid var(--b)">← 返回首页</a>
   </div>
 </header>
@@ -306,6 +316,25 @@ body{font-family:'Noto Sans SC',sans-serif;background:var(--bg);color:var(--t);h
         <div class="tool-card" onclick="location.href='hotel-price-comparison.html'" title="完整比价页">
           <div class="tool-icon">🔍</div>
           <div class="tool-name">比价</div>
+        </div>
+      </div>
+
+      <!-- 创意功能 -->
+      <div class="tools-panel" style="border-top: 1px solid var(--b); padding-top: 16px;">
+        <div class="tools-title">🎨 创意工具</div>
+        <div class="tools-grid">
+          <div class="tool-card" onclick="useTool('image')" title="生图 - AI生成图片">
+            <div class="tool-icon">🎨</div>
+            <div class="tool-name">生图</div>
+          </div>
+          <div class="tool-card" onclick="useTool('video')" title="视频 - AI生成视频">
+            <div class="tool-icon">🎬</div>
+            <div class="tool-name">视频</div>
+          </div>
+          <div class="tool-card" onclick="useTool('image_edit')" title="改图 - AI优化图片">
+            <div class="tool-icon">🖼️</div>
+            <div class="tool-name">改图</div>
+          </div>
         </div>
       </div>
     </div>
@@ -999,7 +1028,10 @@ function loadHistoryItem(i) {
   currentHotels = h.hotels || [];
   currentQuery = h.query || {};
   document.querySelectorAll('.ch-item').forEach(el => el.classList.remove('active'));
-  document.querySelectorAll('.ch-item')[i]?.classList.add('active');
+  var items = document.querySelectorAll('.ch-item');
+  if (items[i]) {
+    items[i].classList.add('active');
+  }
 }
 
 function deleteHistory(i) {
@@ -1020,7 +1052,9 @@ function toggleQuickPanel() {
 function setMode(mode, el) {
   currentMode.mode = mode;
   document.querySelectorAll('.mode-btn').forEach(b => b.classList.remove('active'));
-  el?.classList.add('active');
+  if (el) {
+    el.classList.add('active');
+  }
 }
 
 function fillQuick(text) {
@@ -1043,14 +1077,32 @@ function useTool(tool) {
     ticket: '查三亚蜈支洲岛门票',
     cruise: '查4月邮轮产品',
     feishu: '同步到飞书',
-    trend: '查看三亚酒店价格趋势'
+    trend: '查看三亚酒店价格趋势',
+    // 新增创意工具
+    image: '🎨 我想生成一张图片，描述一下你想要的内容',
+    video: '🎬 视频生成功能开发中，敬请期待',
+    image_edit: '🖼️ 我想优化一张图片，请先上传图片'
   };
-  fillQuick(map[tool] || '查三亚酒店价格');
+
+  if (tool === 'image') {
+    // 显示生图引导
+    addMsg('🎨 <strong>AI生图功能</strong><br>请描述你想要生成的图片，例如：<br>• 一只可爱的猫咪在花园里<br>• 未来科技城市的夜景<br>• 山水画风格的风景', 'ai');
+    fillQuick('生成一张');
+  } else if (tool === 'video') {
+    // 视频功能预留
+    addMsg('🎬 <strong>AI视频生成功能</strong><br>此功能正在开发中，敬请期待！<br>即将支持：<br>• 文本生成视频<br>• 图片生成视频<br>• 视频风格转换', 'ai');
+  } else if (tool === 'image_edit') {
+    // 显示改图引导
+    addMsg('🖼️ <strong>AI图片优化功能</strong><br>请先上传图片，然后告诉我你想要：<br>• 提升图片质量<br>• 调整色彩和亮度<br>• 添加滤镜效果<br>• 智能抠图和背景替换', 'ai');
+    document.getElementById('fileInput').click();
+  } else {
+    fillQuick(map[tool] || '查三亚酒店价格');
+  }
 }
 
 function handleFile(el) {
-  if (el.files?.length) {
-    addMsg(`📎 已选择文件: ${el.files[0].name}`, 'user');
+  if (el.files && el.files.length) {
+    addMsg('📎 已选择文件: ' + el.files[0].name, 'user');
     addMsg('收到附件！目前支持图片和文件保存，将在后续版本中提供AI分析功能', 'ai');
   }
 }
@@ -1069,8 +1121,299 @@ function showDailyPrices() {
       fillAndSearch(dest);
     }, 1000);
   }
+
+  // 页面加载后自动获取并显示积分信息
+  setTimeout(updateMemberPoints, 500);
 })();
+
+// 更新会员积分显示
+function updateMemberPoints() {
+  var memberKey = getMemberKey();
+  fetch(API + '/api/member/me?key=' + memberKey)
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var memberBar = document.getElementById('memberBar');
+      var pointsDisplay = document.getElementById('pointsDisplay');
+      if (memberBar && pointsDisplay) {
+        memberBar.style.display = 'flex';
+        pointsDisplay.textContent = '💰 ' + (data.points || 0) + '积分';
+      }
+    })
+    .catch(function(err) {
+      console.error('获取积分信息失败:', err);
+    });
+}
 </script>
+
+<!-- 积分详情弹窗 -->
+<div id="pointsModal" class="modal" style="display:none;">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>💰 积分详情</h2>
+      <button class="close-btn" onclick="closePointsModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="points-summary">
+        <div class="points-balance">
+          <span class="label">当前余额</span>
+          <span class="value" id="pointsBalance">0</span>
+        </div>
+        <div class="member-tier">
+          <span class="label">会员等级</span>
+          <span class="value" id="memberTier">免费版</span>
+        </div>
+      </div>
+      <div class="quota-details">
+        <h3>本月配额使用情况</h3>
+        <div class="quota-item">
+          <span>OTA查询</span>
+          <span><span id="otaUsed">0</span>/<span id="otaTotal">0</span></span>
+        </div>
+        <div class="quota-item">
+          <span>图片生成</span>
+          <span><span id="imgUsed">0</span>/<span id="imgTotal">0</span></span>
+        </div>
+        <div class="quota-item">
+          <span>图片编辑</span>
+          <span><span id="editUsed">0</span>/<span id="editTotal">0</span></span>
+        </div>
+        <div class="quota-item">
+          <span>视频生成</span>
+          <span><span id="videoUsed">0</span>/<span id="videoTotal">0</span></span>
+        </div>
+      </div>
+      <div class="points-rules">
+        <h3>积分消耗规则</h3>
+        <ul>
+          <li>OTA查询：2积分/次（超出免费额度后）</li>
+          <li>图片生成：18积分/次</li>
+          <li>图片编辑：15积分/次</li>
+          <li>视频生成：88积分/次</li>
+        </ul>
+      </div>
+    </div>
+    <div class="modal-footer">
+      <button class="action-btn" onclick="showRechargeModal()">充值积分</button>
+      <button class="secondary-btn" onclick="showUsageHistory()">查看历史</button>
+    </div>
+  </div>
+</div>
+
+<!-- 使用历史弹窗 -->
+<div id="historyModal" class="modal" style="display:none;">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>📊 使用历史</h2>
+      <button class="close-btn" onclick="closeHistoryModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div id="historyList" class="history-list">
+        <!-- 历史记录动态加载 -->
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- 充值弹窗 -->
+<div id="rechargeModal" class="modal" style="display:none;">
+  <div class="modal-content">
+    <div class="modal-header">
+      <h2>💳 积分充值</h2>
+      <button class="close-btn" onclick="closeRechargeModal()">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="recharge-packages">
+        <div class="package-card" onclick="selectPackage('入门包', 100, 9.9)">
+          <h3>入门包</h3>
+          <div class="points">100积分</div>
+          <div class="price">¥9.9</div>
+        </div>
+        <div class="package-card popular" onclick="selectPackage('旅行包', 500, 39)">
+          <h3>旅行包</h3>
+          <div class="points">500积分</div>
+          <div class="price">¥39</div>
+          <div class="badge">推荐</div>
+        </div>
+        <div class="package-card" onclick="selectPackage('专业包', 2000, 128)">
+          <h3>专业包</h3>
+          <div class="points">2000积分</div>
+          <div class="price">¥128</div>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+// 积分检查相关函数
+function getMemberKey() {
+  var key = localStorage.getItem('tomato_member_key');
+  if (!key) {
+    key = 'member_' + Date.now() + '_' + Math.random().toString(36).substr(2, 9);
+    localStorage.setItem('tomato_member_key', key);
+  }
+  return key;
+}
+
+function getTierName(tierId) {
+  var tiers = {
+    'free': '免费版',
+    'basic': '旅行版',
+    'travel': '旅行版',
+    'pro': '专业版',
+    'enterprise': '企业版'
+  };
+  return tiers[tierId] || '免费版';
+}
+
+function showPointsDetails() {
+  var memberKey = getMemberKey();
+  fetch(API + '/api/member/me?key=' + memberKey)
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      showPointsModal(data);
+    })
+    .catch(function(err) {
+      console.error('获取积分信息失败:', err);
+    });
+}
+
+function showPointsModal(data) {
+  document.getElementById('pointsBalance').textContent = data.points || 0;
+  document.getElementById('memberTier').textContent = getTierName(data.tierId);
+
+  if (data.config && data.config.monthly) {
+    document.getElementById('otaUsed').textContent = data.usage.otaQuery || 0;
+    document.getElementById('otaTotal').textContent = data.config.monthly.otaQuery || 0;
+    document.getElementById('imgUsed').textContent = data.usage.imageGen || 0;
+    document.getElementById('imgTotal').textContent = data.config.monthly.imageGen || 0;
+    document.getElementById('editUsed').textContent = data.usage.imageEdit || 0;
+    document.getElementById('editTotal').textContent = data.config.monthly.imageEdit || 0;
+    document.getElementById('videoUsed').textContent = data.usage.videoGen || 0;
+    document.getElementById('videoTotal').textContent = data.config.monthly.videoGen || 0;
+  }
+
+  document.getElementById('pointsModal').style.display = 'flex';
+}
+
+function closePointsModal() {
+  document.getElementById('pointsModal').style.display = 'none';
+}
+
+function showUsageHistory() {
+  closePointsModal();
+  var memberKey = getMemberKey();
+  fetch(API + '/api/member/usage-history?key=' + memberKey)
+    .then(function(r) { return r.json(); })
+    .then(function(data) {
+      var historyList = document.getElementById('historyList');
+      if (data.history && data.history.length > 0) {
+        historyList.innerHTML = data.history.map(function(h) {
+          return '<div class="history-item">' +
+            '<span class="history-type">' + h.type + '</span>' +
+            '<span class="history-time">' + h.date + '</span>' +
+            '</div>';
+        }).join('');
+      } else {
+        historyList.innerHTML = '<div class="empty-state">暂无使用记录</div>';
+      }
+      document.getElementById('historyModal').style.display = 'flex';
+    })
+    .catch(function(err) {
+      console.error('获取使用历史失败:', err);
+    });
+}
+
+function closeHistoryModal() {
+  document.getElementById('historyModal').style.display = 'none';
+}
+
+function showRechargeModal() {
+  closePointsModal();
+  document.getElementById('rechargeModal').style.display = 'flex';
+}
+
+function closeRechargeModal() {
+  document.getElementById('rechargeModal').style.display = 'none';
+}
+
+function selectPackage(name, points, price) {
+  alert('您选择了：' + name + '\n积分：' + points + '\n价格：¥' + price + '\n\n充值功能开发中，敬请期待！');
+}
+</script>
+
+<style>
+/* 积分详情样式 */
+.modal{
+  position:fixed;top:0;left:0;width:100%;height:100%;
+  background:rgba(0,0,0,0.5);display:flex;align-items:center;
+  justify-content:center;z-index:1000
+}
+.modal-content{
+  background:white;border-radius:12px;width:90%;max-width:500px;
+  max-height:80vh;overflow-y:auto
+}
+.modal-header{
+  padding:20px;border-bottom:1px solid #eee;display:flex;
+  justify-content:space-between;align-items:center
+}
+.modal-header h2{margin:0;font-size:18px}
+.close-btn{
+  width:30px;height:30px;border:none;background:#eee;border-radius:50%;
+  cursor:pointer;font-size:20px;line-height:1
+}
+.close-btn:hover{background:#ddd}
+.modal-body{padding:20px}
+.modal-footer{padding:20px;border-top:1px solid #eee;display:flex;gap:10px}
+.points-summary{display:flex;gap:20px;margin-bottom:20px}
+.points-balance,.member-tier{
+  flex:1;padding:15px;background:#f8f9fa;border-radius:8px;text-align:center
+}
+.points-balance .label,.member-tier .label{display:block;font-size:12px;color:#666;margin-bottom:5px}
+.points-balance .value{font-size:24px;font-weight:bold;color:#FF6B35}
+.member-tier .value{font-size:18px;font-weight:bold;color:#1A3A4A}
+.quota-details{margin-bottom:20px}
+.quota-details h3{font-size:14px;margin-bottom:10px}
+.quota-item{
+  display:flex;justify-content:space-between;padding:10px 0;
+  border-bottom:1px solid #eee
+}
+.points-rules h3{font-size:14px;margin-bottom:10px}
+.points-rules ul{list-style:none;padding:0;margin:0}
+.points-rules li{padding:5px 0;font-size:13px;color:#666}
+.action-btn{
+  flex:1;padding:12px;background:#FF6B35;color:white;border:none;
+  border-radius:8px;cursor:pointer;font-weight:bold
+}
+.action-btn:hover{background:#E55A2B}
+.secondary-btn{
+  flex:1;padding:12px;background:#f5f5f5;color:#666;border:none;
+  border-radius:8px;cursor:pointer
+}
+.secondary-btn:hover{background:#eee}
+.recharge-packages{display:-ms-flexbox;display:flex;-ms-flex-wrap:wrap;flex-wrap:wrap;gap:15px}
+.package-card{
+  -ms-flex:1 1 calc(33.333% - 10px);flex:1 1 calc(33.333% - 10px);
+  padding:20px;background:#f8f9fa;border-radius:8px;cursor:pointer;
+  text-align:center;transition:all 0.2s;border:2px solid transparent;min-width:120px;position:relative
+}
+.package-card:hover{border-color:#FF6B35}
+.package-card.popular{border-color:#00C9A7;background:#E0F7FA}
+.package-card h3{margin:0 0 10px;font-size:16px}
+.package-card .points{font-size:20px;font-weight:bold;margin-bottom:5px}
+.package-card .price{font-size:18px;color:#E67E00}
+.package-card .badge{
+  position:absolute;top:10px;right:10px;padding:4px 8px;
+  background:#00C9A7;color:white;border-radius:4px;font-size:12px
+}
+.history-item{
+  display:flex;justify-content:space-between;padding:12px;
+  background:#f8f9fa;border-radius:8px;margin-bottom:8px
+}
+.history-type{font-weight:bold}
+.history-time{font-size:12px;color:#666}
+</style>
+
 <button class="fbtn" onclick="goBack()" title="返回首页">←</button>
 <style>
 .fbtn{position:fixed;bottom:30px;left:30px;width:50px;height:50px;background:linear-gradient(135deg,#FF6B35,#E55A2B);color:#fff;border:none;border-radius:50%;font-size:24px;cursor:pointer;box-shadow:0 4px 15px rgba(255,107,53,0.4);z-index:1000;transition:all .3s;display:flex;align-items:center;justify-content:center}
