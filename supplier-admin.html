@@ -62,6 +62,9 @@
                 <button onclick="showSection('analytics')" class="sidebar-item w-full text-left px-4 py-3 rounded-lg" data-section="analytics">
                     <i class="fas fa-chart-line mr-3"></i>数据统计
                 </button>
+                <button onclick="showSection('permissions')" class="sidebar-item w-full text-left px-4 py-3 rounded-lg" data-section="permissions">
+                    <i class="fas fa-plug mr-3"></i>对接权限
+                </button>
                 <button onclick="showSection('settings')" class="sidebar-item w-full text-left px-4 py-3 rounded-lg" data-section="settings">
                     <i class="fas fa-cog mr-3"></i>系统设置
                 </button>
@@ -339,6 +342,154 @@
                 </div>
             </section>
 
+            <!-- Connection Permissions Section -->
+            <section id="permissions" class="hidden p-6">
+                <h2 class="text-2xl font-bold text-gray-800 mb-6">
+                    <i class="fas fa-plug text-blue-600 mr-2"></i>对接权限管理
+                </h2>
+
+                <!-- Connection Mode -->
+                <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-bold text-lg">对接方式配置</h3>
+                        <button onclick="savePermissions()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                            <i class="fas fa-save mr-2"></i>保存配置
+                        </button>
+                    </div>
+                    <p class="text-sm text-gray-500 mb-4">配置供应商的对接方式，控制哪些渠道可以展示供应商信息</p>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- API对接 -->
+                        <div class="border rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center space-x-2">
+                                    <i class="fas fa-code text-blue-500"></i>
+                                    <span class="font-semibold">API对接</span>
+                                </div>
+                                <label class="switch" style="width:40px;height:22px;">
+                                    <input type="checkbox" id="permApiEnabled" checked>
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                            <p class="text-xs text-gray-500 mb-3">允许通过API接口查询供应商产品</p>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">API Key</label>
+                                <div class="flex gap-2">
+                                    <input type="text" id="permApiKey" class="flex-1 px-3 py-1.5 border rounded text-sm font-mono" readonly placeholder="自动生成">
+                                    <button onclick="regenerateApiKey()" class="px-3 py-1.5 text-sm bg-gray-100 hover:bg-gray-200 rounded border">刷新</button>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- 网页嵌入 -->
+                        <div class="border rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center space-x-2">
+                                    <i class="fas fa-globe text-green-500"></i>
+                                    <span class="font-semibold">网页嵌入</span>
+                                </div>
+                                <label class="switch" style="width:40px;height:22px;">
+                                    <input type="checkbox" id="permEmbedEnabled" checked>
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                            <p class="text-xs text-gray-500 mb-3">允许将供应商产品嵌入第三方网站</p>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">允许域名</label>
+                                <input type="text" id="permEmbedDomains" class="w-full px-3 py-1.5 border rounded text-sm" placeholder="多个域名用逗号分隔，如: example.com, travel.cn">
+                            </div>
+                        </div>
+
+                        <!-- 消息通知 -->
+                        <div class="border rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center space-x-2">
+                                    <i class="fas fa-bell text-orange-500"></i>
+                                    <span class="font-semibold">消息通知</span>
+                                </div>
+                                <label class="switch" style="width:40px;height:22px;">
+                                    <input type="checkbox" id="permNotifyEnabled" checked>
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                            <p class="text-xs text-gray-500 mb-3">接收新订单、客户咨询等实时通知</p>
+                            <div class="space-y-2">
+                                <label class="flex items-center text-sm">
+                                    <input type="checkbox" id="permNotifyEmail" checked class="mr-2">邮件通知
+                                </label>
+                                <label class="flex items-center text-sm">
+                                    <input type="checkbox" id="permNotifySms" class="mr-2">短信通知
+                                </label>
+                                <label class="flex items-center text-sm">
+                                    <input type="checkbox" id="permNotifyWebhook" class="mr-2">Webhook推送
+                                </label>
+                            </div>
+                            <div id="webhookUrlWrap" class="mt-2">
+                                <label class="block text-xs font-medium text-gray-600 mb-1">Webhook URL</label>
+                                <input type="text" id="permWebhookUrl" class="w-full px-3 py-1.5 border rounded text-sm" placeholder="https://your-server.com/webhook">
+                            </div>
+                        </div>
+
+                        <!-- 数据同步 -->
+                        <div class="border rounded-lg p-4">
+                            <div class="flex items-center justify-between mb-3">
+                                <div class="flex items-center space-x-2">
+                                    <i class="fas fa-sync text-purple-500"></i>
+                                    <span class="font-semibold">数据同步</span>
+                                </div>
+                                <label class="switch" style="width:40px;height:22px;">
+                                    <input type="checkbox" id="permSyncEnabled">
+                                    <span class="slider round"></span>
+                                </label>
+                            </div>
+                            <p class="text-xs text-gray-500 mb-3">自动同步产品库存和价格到合作伙伴</p>
+                            <div>
+                                <label class="block text-xs font-medium text-gray-600 mb-1">同步频率</label>
+                                <select id="permSyncFreq" class="w-full px-3 py-1.5 border rounded text-sm">
+                                    <option value="realtime">实时同步</option>
+                                    <option value="hourly" selected>每小时</option>
+                                    <option value="daily">每天</option>
+                                </select>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <!-- Contact Display Permissions -->
+                <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
+                    <h3 class="font-bold text-lg mb-4">联系方式展示权限</h3>
+                    <p class="text-sm text-gray-500 mb-4">控制供应商联系方式在不同场景下的展示规则</p>
+
+                    <div class="overflow-x-auto">
+                        <table class="w-full text-sm">
+                            <thead>
+                                <tr class="text-left text-gray-500 border-b bg-gray-50">
+                                    <th class="p-3">联系方式类型</th>
+                                    <th class="p-3 text-center">公开页展示</th>
+                                    <th class="p-3 text-center">订单确认后展示</th>
+                                    <th class="p-3 text-center">AI推荐展示</th>
+                                    <th class="p-3 text-center">合作伙伴展示</th>
+                                </tr>
+                            </thead>
+                            <tbody id="permContactTable">
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <!-- Connected Partners -->
+                <div class="bg-white rounded-xl shadow-sm p-6">
+                    <div class="flex items-center justify-between mb-4">
+                        <h3 class="font-bold text-lg">已授权合作伙伴</h3>
+                        <button onclick="openPartnerModal()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                            <i class="fas fa-plus mr-2"></i>添加合作伙伴
+                        </button>
+                    </div>
+                    <div id="partnersList" class="space-y-3">
+                    </div>
+                </div>
+            </section>
+
             <!-- Settings Section -->
             <section id="settings" class="hidden p-6">
                 <h2 class="text-2xl font-bold text-gray-800 mb-6">
@@ -479,6 +630,62 @@
             </div>
             <div class="px-6 py-4 border-t flex justify-end">
                 <button onclick="closeOrderDetailModal()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">关闭</button>
+            </div>
+        </div>
+    </div>
+
+    <!-- Partner Modal -->
+    <div id="partnerModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl w-full max-w-lg">
+            <div class="px-6 py-4 border-b flex items-center justify-between">
+                <h3 class="text-lg font-bold text-gray-800" id="partnerModalTitle">添加合作伙伴</h3>
+                <button onclick="closePartnerModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-4">
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">合作伙伴名称</label>
+                    <input type="text" id="partnerName" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500" placeholder="如：携程旅行网">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">对接方式</label>
+                    <select id="partnerType" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500">
+                        <option value="api">API对接</option>
+                        <option value="embed">网页嵌入</option>
+                        <option value="feed">数据Feed</option>
+                        <option value="manual">人工对接</option>
+                    </select>
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">联系人</label>
+                    <input type="text" id="partnerContact" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500" placeholder="对接人姓名">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">联系邮箱</label>
+                    <input type="email" id="partnerEmail" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500" placeholder="对接人邮箱">
+                </div>
+                <div>
+                    <label class="block text-sm font-medium text-gray-700 mb-1">授权产品范围</label>
+                    <div class="flex flex-wrap gap-2 mt-1">
+                        <label class="flex items-center text-sm bg-gray-50 px-3 py-1.5 rounded border">
+                            <input type="checkbox" id="partnerScopeHotel" checked class="mr-1.5">酒店
+                        </label>
+                        <label class="flex items-center text-sm bg-gray-50 px-3 py-1.5 rounded border">
+                            <input type="checkbox" id="partnerScopeFlight" class="mr-1.5">机票
+                        </label>
+                        <label class="flex items-center text-sm bg-gray-50 px-3 py-1.5 rounded border">
+                            <input type="checkbox" id="partnerScopeTicket" class="mr-1.5">门票
+                        </label>
+                        <label class="flex items-center text-sm bg-gray-50 px-3 py-1.5 rounded border">
+                            <input type="checkbox" id="partnerScopeTour" class="mr-1.5">度假
+                        </label>
+                    </div>
+                </div>
+            </div>
+            <div class="px-6 py-4 border-t flex justify-end space-x-3">
+                <button onclick="closePartnerModal()" class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg">取消</button>
+                <button onclick="savePartner()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">保存</button>
             </div>
         </div>
     </div>
@@ -1068,6 +1275,245 @@
         showToast('设置已保存');
     }
 
+    // ========== 对接权限管理 ==========
+
+    var contactTypes=[
+        {id:'phone',name:'电话',icon:'fas fa-phone',color:'blue'},
+        {id:'email',name:'邮箱',icon:'fas fa-envelope',color:'green'},
+        {id:'wechat',name:'微信',icon:'fab fa-weixin',color:'green'},
+        {id:'whatsapp',name:'WhatsApp',icon:'fab fa-whatsapp',color:'green'},
+        {id:'address',name:'公司地址',icon:'fas fa-map-marker-alt',color:'red'},
+        {id:'website',name:'官网',icon:'fas fa-globe',color:'purple'}
+    ];
+
+    var defaultContactPerms={
+        phone:{public:false,afterOrder:true,aiRecommend:false,partner:true},
+        email:{public:false,afterOrder:true,aiRecommend:false,partner:true},
+        wechat:{public:false,afterOrder:true,aiRecommend:false,partner:false},
+        whatsapp:{public:false,afterOrder:false,aiRecommend:false,partner:false},
+        address:{public:true,afterOrder:true,aiRecommend:true,partner:true},
+        website:{public:true,afterOrder:true,aiRecommend:true,partner:true}
+    };
+
+    var partners=[];
+    var editingPartnerId=null;
+
+    function renderContactPerms(){
+        var perms=safeGetJSON('supplier_contact_perms',defaultContactPerms);
+        var tbody=document.getElementById('permContactTable');
+        tbody.innerHTML=contactTypes.map(function(ct){
+            var p=perms[ct.id]||{public:false,afterOrder:false,aiRecommend:false,partner:false};
+            return '<tr class="border-b hover:bg-gray-50">'+
+                '<td class="p-3"><div class="flex items-center space-x-2"><i class="'+ct.icon+' text-'+ct.color+'-500"></i><span class="font-medium">'+ct.name+'</span></div></td>'+
+                '<td class="p-3 text-center"><input type="checkbox" data-perm="'+ct.id+'" data-scope="public"'+(p.public?' checked':'')+' class="perm-check"></td>'+
+                '<td class="p-3 text-center"><input type="checkbox" data-perm="'+ct.id+'" data-scope="afterOrder"'+(p.afterOrder?' checked':'')+' class="perm-check"></td>'+
+                '<td class="p-3 text-center"><input type="checkbox" data-perm="'+ct.id+'" data-scope="aiRecommend"'+(p.aiRecommend?' checked':'')+' class="perm-check"></td>'+
+                '<td class="p-3 text-center"><input type="checkbox" data-perm="'+ct.id+'" data-scope="partner"'+(p.partner?' checked':'')+' class="perm-check"></td>'+
+            '</tr>';
+        }).join('');
+    }
+
+    function loadPermissions(){
+        var perms=safeGetJSON('supplier_permissions',{
+            apiEnabled:true,embedEnabled:true,notifyEnabled:true,syncEnabled:false,
+            apiKey:'',embedDomains:'',notifyEmail:true,notifySms:false,notifyWebhook:false,webhookUrl:'',
+            syncFreq:'hourly'
+        });
+
+        document.getElementById('permApiEnabled').checked=perms.apiEnabled!==false;
+        document.getElementById('permApiKey').value=perms.apiKey||generateApiKey();
+        document.getElementById('permEmbedEnabled').checked=perms.embedEnabled!==false;
+        document.getElementById('permEmbedDomains').value=perms.embedDomains||'';
+        document.getElementById('permNotifyEnabled').checked=perms.notifyEnabled!==false;
+        document.getElementById('permNotifyEmail').checked=perms.notifyEmail!==false;
+        document.getElementById('permNotifySms').checked=perms.notifySms===true;
+        document.getElementById('permNotifyWebhook').checked=perms.notifyWebhook===true;
+        document.getElementById('permWebhookUrl').value=perms.webhookUrl||'';
+        document.getElementById('permSyncEnabled').checked=perms.syncEnabled===true;
+        document.getElementById('permSyncFreq').value=perms.syncFreq||'hourly';
+
+        renderContactPerms();
+        renderPartners();
+    }
+
+    function generateApiKey(){
+        var chars='ABCDEFGHIJKLMNOPQRSTUVWXYZabcdefghijklmnopqrstuvwxyz0123456789';
+        var key='tp_';
+        for(var i=0;i<32;i++)key+=chars.charAt(Math.floor(Math.random()*chars.length));
+        return key;
+    }
+
+    function regenerateApiKey(){
+        var key=generateApiKey();
+        document.getElementById('permApiKey').value=key;
+        showToast('API Key已刷新');
+    }
+
+    function savePermissions(){
+        var perms={
+            apiEnabled:document.getElementById('permApiEnabled').checked,
+            apiKey:sanitize(document.getElementById('permApiKey').value.trim()),
+            embedEnabled:document.getElementById('permEmbedEnabled').checked,
+            embedDomains:sanitize(document.getElementById('permEmbedDomains').value.trim()),
+            notifyEnabled:document.getElementById('permNotifyEnabled').checked,
+            notifyEmail:document.getElementById('permNotifyEmail').checked,
+            notifySms:document.getElementById('permNotifySms').checked,
+            notifyWebhook:document.getElementById('permNotifyWebhook').checked,
+            webhookUrl:sanitize(document.getElementById('permWebhookUrl').value.trim()),
+            syncEnabled:document.getElementById('permSyncEnabled').checked,
+            syncFreq:document.getElementById('permSyncFreq').value
+        };
+        localStorage.setItem('supplier_permissions',JSON.stringify(perms));
+
+        // Save contact permissions
+        var contactPerms={};
+        document.querySelectorAll('.perm-check').forEach(function(cb){
+            var permId=cb.dataset.perm;
+            var scope=cb.dataset.scope;
+            if(!contactPerms[permId])contactPerms[permId]={};
+            contactPerms[permId][scope]=cb.checked;
+        });
+        localStorage.setItem('supplier_contact_perms',JSON.stringify(contactPerms));
+
+        showToast('对接权限配置已保存');
+    }
+
+    function renderPartners(){
+        partners=safeGetJSON('supplier_partners',[]);
+        var container=document.getElementById('partnersList');
+
+        if(partners.length===0){
+            container.innerHTML='<div class="text-center py-8 text-gray-400"><i class="fas fa-handshake text-3xl mb-2 block"></i><p>暂无合作伙伴，点击"添加合作伙伴"开始对接</p></div>';
+            return;
+        }
+
+        var typeLabels={api:'API对接',embed:'网页嵌入',feed:'数据Feed',manual:'人工对接'};
+        var typeColors={api:'blue',embed:'green',feed:'purple',manual:'orange'};
+
+        container.innerHTML=partners.map(function(p){
+            var tc=typeColors[p.type]||'blue';
+            var scopeLabels=[];
+            if(p.scope&&p.scope.hotel)scopeLabels.push('酒店');
+            if(p.scope&&p.scope.flight)scopeLabels.push('机票');
+            if(p.scope&&p.scope.ticket)scopeLabels.push('门票');
+            if(p.scope&&p.scope.tour)scopeLabels.push('度假');
+            return '<div class="border rounded-lg p-4 flex items-center justify-between">'+
+                '<div class="flex items-center space-x-3">'+
+                    '<div class="w-10 h-10 bg-'+tc+'-100 rounded-full flex items-center justify-center">'+
+                        '<i class="fas fa-handshake text-'+tc+'-600"></i>'+
+                    '</div>'+
+                    '<div>'+
+                        '<p class="font-semibold">'+sanitize(p.name)+'</p>'+
+                        '<div class="flex items-center gap-2 mt-1">'+
+                            '<span class="px-2 py-0.5 bg-'+tc+'-100 text-'+tc+'-600 rounded text-xs">'+(typeLabels[p.type]||p.type)+'</span>'+
+                            '<span class="text-xs text-gray-500">'+sanitize(p.contact||'')+'</span>'+
+                            (scopeLabels.length?'<span class="text-xs text-gray-400">| '+scopeLabels.join(', ')+'</span>':'')+
+                        '</div>'+
+                    '</div>'+
+                '</div>'+
+                '<div class="flex items-center space-x-2">'+
+                    '<label class="switch" style="width:40px;height:22px;">'+
+                        '<input type="checkbox"'+(p.active!==false?' checked':'')+' onchange="togglePartner('+p.id+',this.checked)">'+
+                        '<span class="slider round"></span>'+
+                    '</label>'+
+                    '<button onclick="editPartner('+p.id+')" class="text-blue-500 hover:text-blue-700"><i class="fas fa-edit"></i></button>'+
+                    '<button onclick="deletePartner('+p.id+')" class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button>'+
+                '</div>'+
+            '</div>';
+        }).join('');
+    }
+
+    function openPartnerModal(){
+        document.getElementById('partnerModal').classList.remove('hidden');
+    }
+
+    function closePartnerModal(){
+        document.getElementById('partnerModal').classList.add('hidden');
+        document.getElementById('partnerName').value='';
+        document.getElementById('partnerType').value='api';
+        document.getElementById('partnerContact').value='';
+        document.getElementById('partnerEmail').value='';
+        document.getElementById('partnerScopeHotel').checked=true;
+        document.getElementById('partnerScopeFlight').checked=false;
+        document.getElementById('partnerScopeTicket').checked=false;
+        document.getElementById('partnerScopeTour').checked=false;
+        document.getElementById('partnerModalTitle').textContent='添加合作伙伴';
+        editingPartnerId=null;
+    }
+
+    function savePartner(){
+        var name=sanitize(document.getElementById('partnerName').value.trim());
+        if(!name){
+            showToast('请输入合作伙伴名称','error');
+            return;
+        }
+
+        var partnerData={
+            name:name,
+            type:document.getElementById('partnerType').value,
+            contact:sanitize(document.getElementById('partnerContact').value.trim()),
+            email:sanitize(document.getElementById('partnerEmail').value.trim()),
+            scope:{
+                hotel:document.getElementById('partnerScopeHotel').checked,
+                flight:document.getElementById('partnerScopeFlight').checked,
+                ticket:document.getElementById('partnerScopeTicket').checked,
+                tour:document.getElementById('partnerScopeTour').checked
+            },
+            active:true
+        };
+
+        if(editingPartnerId){
+            var idx=partners.findIndex(function(p){return p.id===editingPartnerId});
+            if(idx!==-1){
+                partnerData.id=editingPartnerId;
+                partners[idx]=partnerData;
+            }
+            editingPartnerId=null;
+        }else{
+            partnerData.id=Date.now();
+            partners.push(partnerData);
+        }
+
+        localStorage.setItem('supplier_partners',JSON.stringify(partners));
+        closePartnerModal();
+        renderPartners();
+        showToast('合作伙伴已保存');
+    }
+
+    function editPartner(id){
+        var p=partners.find(function(p){return p.id===id});
+        if(p){
+            editingPartnerId=id;
+            document.getElementById('partnerName').value=p.name||'';
+            document.getElementById('partnerType').value=p.type||'api';
+            document.getElementById('partnerContact').value=p.contact||'';
+            document.getElementById('partnerEmail').value=p.email||'';
+            document.getElementById('partnerScopeHotel').checked=p.scope&&p.scope.hotel;
+            document.getElementById('partnerScopeFlight').checked=p.scope&&p.scope.flight;
+            document.getElementById('partnerScopeTicket').checked=p.scope&&p.scope.ticket;
+            document.getElementById('partnerScopeTour').checked=p.scope&&p.scope.tour;
+            document.getElementById('partnerModalTitle').textContent='编辑合作伙伴';
+            openPartnerModal();
+        }
+    }
+
+    function deletePartner(id){
+        if(confirm('确定要删除此合作伙伴吗？')){
+            partners=partners.filter(function(p){return p.id!==id});
+            localStorage.setItem('supplier_partners',JSON.stringify(partners));
+            renderPartners();
+            showToast('合作伙伴已删除');
+        }
+    }
+
+    function togglePartner(id,active){
+        var p=partners.find(function(p){return p.id===id});
+        if(p){
+            p.active=active;
+            localStorage.setItem('supplier_partners',JSON.stringify(partners));
+        }
+    }
+
     // ========== 页面初始化 ==========
 
     document.addEventListener('DOMContentLoaded',function(){
@@ -1112,6 +1558,7 @@
         renderKnowledgeList();
         renderOrdersTable();
         loadSettings();
+        loadPermissions();
 
         // 触发条件联动
         document.getElementById('templateTrigger').addEventListener('change',function(){
