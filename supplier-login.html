@@ -22,23 +22,23 @@ body{font-family:'Noto Sans SC',sans-serif;background:linear-gradient(135deg,#FF
 .tab-content.active{display:block}
 .form-group{margin-bottom:20px}
 .form-label{display:block;font-size:14px;font-weight:500;margin-bottom:8px;color:var(--text-dark)}
-.form-input{width:100%;padding:12px 16px;border:1px solid var(--border);border-radius:8px;font-size:14px;font-family:inherit;transition:all 0.3s}
+.form-input{width:100%;padding:12px 16px;border:1px solid var(--border);border-radius:8px;font-size:16px;font-family:inherit;transition:all 0.3s}
 .form-input:focus{outline:none;border-color:var(--primary);box-shadow:0 0 0 3px rgba(255,107,53,0.1)}
 .form-input.error{border-color:#ef4444}
-.error-msg{color:#ef4444;font-size:12px;margin-top:4px}
-.success-msg{color:var(--accent);font-size:12px;margin-top:4px}
+.error-msg{color:#ef4444;font-size:12px;margin-top:4px;min-height:16px}
 .btn{width:100%;padding:14px;border-radius:8px;font-size:16px;font-weight:600;cursor:pointer;border:none;transition:all 0.3s;margin-top:8px}
 .btn-primary{background:var(--primary);color:white}
 .btn-primary:hover{background:#E55A2B;transform:translateY(-2px);box-shadow:0 8px 20px rgba(255,107,53,0.3)}
-.btn-primary:disabled{background:#ccc;cursor:not-allowed;transform:none}
+.btn-primary:disabled{background:#ccc;cursor:not-allowed;transform:none;box-shadow:none}
 .btn-secondary{background:var(--bg-light);color:var(--primary);border:2px solid var(--primary)}
 .btn-secondary:hover{background:var(--primary);color:white}
+.btn-loading{opacity:0.7;cursor:wait;pointer-events:none}
 .divider{text-align:center;margin:20px 0;color:var(--text-gray);font-size:13px}
 .divider::before,.divider::after{content:'';display:inline-block;width:40%;height:1px;background:var(--border);vertical-align:middle}
 .divider::before{margin-right:10px}
 .divider::after{margin-left:10px}
 .quick-login{display:grid;grid-template-columns:1fr;gap:12px;margin-top:16px}
-.quick-btn{padding:12px;border-radius:8px;border:1px solid var(--border);background:white;cursor:pointer;font-size:13px;transition:all 0.3s;text-align:left}
+.quick-btn{padding:14px;border-radius:8px;border:1px solid var(--border);background:white;cursor:pointer;font-size:13px;transition:all 0.3s;text-align:left}
 .quick-btn:hover{border-color:var(--primary);background:var(--bg-light)}
 .quick-btn-title{font-weight:600;color:var(--text-dark)}
 .quick-btn-desc{font-size:12px;color:var(--text-gray);margin-top:2px}
@@ -48,14 +48,14 @@ body{font-family:'Noto Sans SC',sans-serif;background:linear-gradient(135deg,#FF
 .success-page{display:none;text-align:center}
 .success-icon{font-size:64px;margin-bottom:16px}
 .success-title{font-size:24px;font-weight:700;margin-bottom:8px}
-.success-desc{color:var(--text-gray);margin-bottom:24px}
+.success-desc{color:var(--text-gray);margin-bottom:16px}
 .supplier-info{background:var(--bg-light);border-radius:12px;padding:16px;margin-bottom:16px;text-align:left}
 .supplier-info-row{display:flex;justify-content:space-between;margin-bottom:8px;font-size:14px}
 .supplier-info-row:last-child{margin-bottom:0}
 .supplier-info-label{color:var(--text-gray)}
 .supplier-info-value{font-weight:600;color:var(--text-dark)}
 .info-box{background:#E8F5E9;border-left:4px solid var(--accent);padding:12px;border-radius:4px;margin-bottom:16px;font-size:13px;color:#2E7D32}
-@media(max-width:480px){.card{padding:24px}.logo-text{font-size:18px}}
+@media(max-width:480px){.card{padding:24px}.logo-text{font-size:18px}.form-input{font-size:16px}.quick-btn{padding:14px}.supplier-info-row{flex-direction:column;gap:2px}}
 </style>
 </head>
 <body>
@@ -87,17 +87,17 @@ body{font-family:'Noto Sans SC',sans-serif;background:linear-gradient(135deg,#FF
 <form onsubmit="handleLogin(event)">
 <div class="form-group">
 <label class="form-label">供应商账号</label>
-<input type="text" class="form-input" id="loginUsername" placeholder="输入供应商账号" required>
+<input type="text" class="form-input" id="loginUsername" placeholder="输入供应商账号" required autocomplete="username">
 <div class="error-msg" id="loginUsernameError"></div>
 </div>
 
 <div class="form-group">
 <label class="form-label">密码</label>
-<input type="password" class="form-input" id="loginPassword" placeholder="输入密码" required>
+<input type="password" class="form-input" id="loginPassword" placeholder="输入密码" required autocomplete="current-password">
 <div class="error-msg" id="loginPasswordError"></div>
 </div>
 
-<button type="submit" class="btn btn-primary">登录</button>
+<button type="submit" class="btn btn-primary" id="loginBtn">登录</button>
 </form>
 
 <div class="divider">或</div>
@@ -107,6 +107,10 @@ body{font-family:'Noto Sans SC',sans-serif;background:linear-gradient(135deg,#FF
 <div class="quick-btn-title">🧪 测试账号</div>
 <div class="quick-btn-desc">gysyansh01 / 123456</div>
 </button>
+</div>
+
+<div style="text-align:center;margin-top:16px">
+<span class="link" onclick="checkRegistrationStatus()">查询注册审核状态</span>
 </div>
 
 <div class="footer">
@@ -129,13 +133,13 @@ body{font-family:'Noto Sans SC',sans-serif;background:linear-gradient(135deg,#FF
 
 <div class="form-group">
 <label class="form-label">供应商账号</label>
-<input type="text" class="form-input" id="regUsername" placeholder="输入账号（6-20字符）" required>
+<input type="text" class="form-input" id="regUsername" placeholder="输入账号（6-20字符）" required autocomplete="username">
 <div class="error-msg" id="regUsernameError"></div>
 </div>
 
 <div class="form-group">
 <label class="form-label">联系邮箱</label>
-<input type="email" class="form-input" id="regEmail" placeholder="输入邮箱地址" required>
+<input type="email" class="form-input" id="regEmail" placeholder="输入邮箱地址" required autocomplete="email">
 <div class="error-msg" id="regEmailError"></div>
 </div>
 
@@ -147,17 +151,17 @@ body{font-family:'Noto Sans SC',sans-serif;background:linear-gradient(135deg,#FF
 
 <div class="form-group">
 <label class="form-label">密码</label>
-<input type="password" class="form-input" id="regPassword" placeholder="输入密码（6位以上）" required>
+<input type="password" class="form-input" id="regPassword" placeholder="输入密码（6位以上）" required autocomplete="new-password">
 <div class="error-msg" id="regPasswordError"></div>
 </div>
 
 <div class="form-group">
 <label class="form-label">确认密码</label>
-<input type="password" class="form-input" id="regPasswordConfirm" placeholder="再次输入密码" required>
+<input type="password" class="form-input" id="regPasswordConfirm" placeholder="再次输入密码" required autocomplete="new-password">
 <div class="error-msg" id="regPasswordConfirmError"></div>
 </div>
 
-<button type="submit" class="btn btn-primary">提交注册申请</button>
+<button type="submit" class="btn btn-primary" id="registerBtn">提交注册申请</button>
 </form>
 
 <div class="footer">
@@ -184,188 +188,287 @@ body{font-family:'Noto Sans SC',sans-serif;background:linear-gradient(135deg,#FF
 <span class="supplier-info-value" id="successUsername">-</span>
 </div>
 </div>
-<button class="btn btn-primary" onclick="goToAdmin()">进入后台</button>
+<p id="redirectCountdown" style="color:var(--text-gray);font-size:13px;margin-bottom:12px">3秒后自动跳转...</p>
+<button class="btn btn-secondary" onclick="cancelRedirect()" style="margin-bottom:8px">取消跳转</button>
+<button class="btn btn-primary" onclick="goToAdmin()">立即进入后台</button>
 </div>
 
 </div>
 </div>
 
 <script>
-// 初始化供应商数据
-function initSuppliers(){
-  let suppliers=JSON.parse(localStorage.getItem('suppliers')||'[]');
-  if(suppliers.length===0){
-    suppliers=[
-      {supplier_id:'s_gys001',supplier_name:'普吉岛阳光地接社',username:'gysyansh01',email:'sunny@phuket.com',phone:'66-81-234-5678',password:'123456',status:'approved',created_at:Date.now()},
-      {supplier_id:'s_thai01',supplier_name:'泰享旅游',username:'thai_enjoy',email:'enjoy@thai.com',phone:'66-81-234-5679',password:'123456',status:'approved',created_at:Date.now()},
-      {supplier_id:'s_sabah01',supplier_name:'沙巴风情地接社',username:'sabah_travel',email:'sabah@travel.com',phone:'60-87-234-5680',password:'123456',status:'approved',created_at:Date.now()}
-    ];
-    localStorage.setItem('suppliers',JSON.stringify(suppliers));
+// ========== 工具函数 ==========
+
+function safeGetJSON(key,fallback){
+  try{
+    var data=localStorage.getItem(key);
+    return data?JSON.parse(data):fallback;
+  }catch(e){
+    return fallback;
   }
 }
 
-// 生成供应商ID
+function sanitize(str){
+  if(typeof str!=='string')return '';
+  var div=document.createElement('div');
+  div.textContent=str;
+  return div.innerHTML;
+}
+
+async function hashPassword(password){
+  if(window.crypto&&window.crypto.subtle){
+    var encoder=new TextEncoder();
+    var data=encoder.encode(password+'_tomatotrip_salt');
+    var hashBuffer=await crypto.subtle.digest('SHA-256',data);
+    var hashArray=Array.from(new Uint8Array(hashBuffer));
+    return hashArray.map(function(b){return b.toString(16).padStart(2,'0')}).join('');
+  }else{
+    var hash=5381;
+    for(var i=0;i<password.length;i++){
+      hash=((hash<<5)+hash)+password.charCodeAt(i);
+    }
+    return 'djb2_'+Math.abs(hash).toString(16);
+  }
+}
+
+function showToast(message,type){
+  type=type||'success';
+  var toast=document.createElement('div');
+  toast.style.cssText='position:fixed;top:20px;right:20px;padding:14px 24px;border-radius:8px;color:#fff;font-size:14px;font-weight:600;z-index:10000;transition:opacity 0.3s;max-width:320px;';
+  toast.style.background=type==='success'?'#00C9A7':type==='error'?'#ef4444':'#FF6B35';
+  toast.textContent=message;
+  document.body.appendChild(toast);
+  setTimeout(function(){toast.style.opacity='0'},2500);
+  setTimeout(function(){toast.remove()},3000);
+}
+
+// ========== 状态 ==========
+
+var redirectTimer=null;
+
+// ========== 初始化供应商数据 ==========
+
+async function initSuppliers(){
+  var suppliers=safeGetJSON('suppliers',[]);
+  if(suppliers.length===0){
+    var hashedPw=await hashPassword('123456');
+    suppliers=[
+      {supplier_id:'s_gys001',supplier_name:'普吉岛阳光地接社',username:'gysyansh01',email:'sunny@phuket.com',phone:'66-81-234-5678',password:hashedPw,status:'approved',created_at:Date.now()},
+      {supplier_id:'s_thai01',supplier_name:'泰享旅游',username:'thai_enjoy',email:'enjoy@thai.com',phone:'66-81-234-5679',password:hashedPw,status:'approved',created_at:Date.now()},
+      {supplier_id:'s_sabah01',supplier_name:'沙巴风情地接社',username:'sabah_travel',email:'sabah@travel.com',phone:'60-87-234-5680',password:hashedPw,status:'approved',created_at:Date.now()}
+    ];
+    localStorage.setItem('suppliers',JSON.stringify(suppliers));
+  }else{
+    // Migration: if any password looks like plaintext (less than 20 chars), re-hash defaults
+    var needsRehash=suppliers.some(function(s){return s.password&&s.password.length<20});
+    if(needsRehash){
+      var hashedPw=await hashPassword('123456');
+      suppliers.forEach(function(s){
+        if(s.password&&s.password.length<20){
+          s.password=hashedPw;
+        }
+      });
+      localStorage.setItem('suppliers',JSON.stringify(suppliers));
+    }
+  }
+}
+
+// ========== 生成供应商ID ==========
+
 function generateSupplierId(){
   return 's_'+Math.random().toString(36).substr(2,6);
 }
 
-// 切换标签页
+// ========== 切换标签页 ==========
+
 function switchTab(tab){
-  document.querySelectorAll('.tab-content').forEach(el=>el.classList.remove('active'));
-  document.querySelectorAll('.tab').forEach(el=>el.classList.remove('active'));
+  document.querySelectorAll('.tab-content').forEach(function(el){el.classList.remove('active')});
+  document.querySelectorAll('.tab').forEach(function(el){el.classList.remove('active')});
   document.getElementById(tab).classList.add('active');
-  document.querySelector(`[onclick="switchTab('${tab}')"]`).classList.add('active');
+  document.querySelector('[onclick="switchTab(\''+tab+'\')"]').classList.add('active');
   clearErrors();
 }
 
-// 清除错误信息
+// ========== 清除错误信息 ==========
+
 function clearErrors(){
-  document.querySelectorAll('.error-msg').forEach(el=>el.textContent='');
-  document.querySelectorAll('.form-input').forEach(el=>el.classList.remove('error'));
+  document.querySelectorAll('.error-msg').forEach(function(el){el.textContent=''});
+  document.querySelectorAll('.form-input').forEach(function(el){el.classList.remove('error')});
 }
 
-// 登录处理
-function handleLogin(e){
+// ========== 登录处理 ==========
+
+async function handleLogin(e){
   e.preventDefault();
   clearErrors();
-  
-  const username=document.getElementById('loginUsername').value.trim();
-  const password=document.getElementById('loginPassword').value;
-  
+
+  var btn=document.getElementById('loginBtn');
+  var origText=btn.textContent;
+  btn.disabled=true;
+  btn.textContent='登录中...';
+  btn.classList.add('btn-loading');
+
+  var username=sanitize(document.getElementById('loginUsername').value.trim());
+  var password=document.getElementById('loginPassword').value;
+
   if(!username){
     document.getElementById('loginUsernameError').textContent='请输入供应商账号';
     document.getElementById('loginUsername').classList.add('error');
+    btn.disabled=false;btn.textContent=origText;btn.classList.remove('btn-loading');
     return;
   }
-  
+
   if(!password){
     document.getElementById('loginPasswordError').textContent='请输入密码';
     document.getElementById('loginPassword').classList.add('error');
+    btn.disabled=false;btn.textContent=origText;btn.classList.remove('btn-loading');
     return;
   }
-  
-  const suppliers=JSON.parse(localStorage.getItem('suppliers')||'[]');
-  const supplier=suppliers.find(s=>s.username===username);
-  
+
+  var suppliers=safeGetJSON('suppliers',[]);
+  var supplier=suppliers.find(function(s){return s.username===username});
+
   if(!supplier){
     document.getElementById('loginUsernameError').textContent='供应商账号不存在';
     document.getElementById('loginUsername').classList.add('error');
+    btn.disabled=false;btn.textContent=origText;btn.classList.remove('btn-loading');
     return;
   }
-  
-  if(supplier.password!==password){
+
+  var hashedPw=await hashPassword(password);
+
+  if(supplier.password!==hashedPw){
     document.getElementById('loginPasswordError').textContent='密码错误';
     document.getElementById('loginPassword').classList.add('error');
+    btn.disabled=false;btn.textContent=origText;btn.classList.remove('btn-loading');
     return;
   }
-  
+
   if(supplier.status!=='approved'){
-    document.getElementById('loginUsernameError').textContent='账号未审核通过，请稍候';
+    var statusText=supplier.status==='pending'?'账号正在审核中，请耐心等待':'账号已被拒绝，请联系管理员';
+    document.getElementById('loginUsernameError').textContent=statusText;
     document.getElementById('loginUsername').classList.add('error');
+    btn.disabled=false;btn.textContent=origText;btn.classList.remove('btn-loading');
     return;
   }
-  
-  // 登录成功
+
   loginSuccess(supplier);
 }
 
-// 注册处理
-function handleRegister(e){
+// ========== 注册处理 ==========
+
+async function handleRegister(e){
   e.preventDefault();
   clearErrors();
-  
-  const supplierName=document.getElementById('regSupplierName').value.trim();
-  const username=document.getElementById('regUsername').value.trim();
-  const email=document.getElementById('regEmail').value.trim();
-  const phone=document.getElementById('regPhone').value.trim();
-  const password=document.getElementById('regPassword').value;
-  const passwordConfirm=document.getElementById('regPasswordConfirm').value;
-  
-  let hasError=false;
-  
+
+  var btn=document.getElementById('registerBtn');
+  var origText=btn.textContent;
+  btn.disabled=true;
+  btn.textContent='提交中...';
+  btn.classList.add('btn-loading');
+
+  var supplierName=sanitize(document.getElementById('regSupplierName').value.trim());
+  var username=sanitize(document.getElementById('regUsername').value.trim());
+  var email=sanitize(document.getElementById('regEmail').value.trim());
+  var phone=sanitize(document.getElementById('regPhone').value.trim());
+  var password=document.getElementById('regPassword').value;
+  var passwordConfirm=document.getElementById('regPasswordConfirm').value;
+
+  var hasError=false;
+
   if(supplierName.length<2){
     document.getElementById('regSupplierNameError').textContent='请输入有效的供应商名称';
     document.getElementById('regSupplierName').classList.add('error');
     hasError=true;
   }
-  
+
   if(username.length<6||username.length>20){
     document.getElementById('regUsernameError').textContent='账号需要6-20个字符';
     document.getElementById('regUsername').classList.add('error');
     hasError=true;
   }
-  
-  if(!email.includes('@')){
+
+  if(!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)){
     document.getElementById('regEmailError').textContent='请输入有效的邮箱地址';
     document.getElementById('regEmail').classList.add('error');
     hasError=true;
   }
-  
+
   if(phone.length<10){
     document.getElementById('regPhoneError').textContent='请输入有效的电话号码';
     document.getElementById('regPhone').classList.add('error');
     hasError=true;
   }
-  
+
   if(password.length<6){
     document.getElementById('regPasswordError').textContent='密码需要至少6个字符';
     document.getElementById('regPassword').classList.add('error');
     hasError=true;
   }
-  
+
   if(password!==passwordConfirm){
     document.getElementById('regPasswordConfirmError').textContent='两次输入的密码不一致';
     document.getElementById('regPasswordConfirm').classList.add('error');
     hasError=true;
   }
-  
-  if(hasError)return;
-  
-  const suppliers=JSON.parse(localStorage.getItem('suppliers')||'[]');
-  
-  if(suppliers.find(s=>s.username===username)){
+
+  if(hasError){
+    btn.disabled=false;btn.textContent=origText;btn.classList.remove('btn-loading');
+    return;
+  }
+
+  var suppliers=safeGetJSON('suppliers',[]);
+
+  if(suppliers.find(function(s){return s.username===username})){
     document.getElementById('regUsernameError').textContent='账号已存在';
     document.getElementById('regUsername').classList.add('error');
+    btn.disabled=false;btn.textContent=origText;btn.classList.remove('btn-loading');
     return;
   }
-  
-  if(suppliers.find(s=>s.email===email)){
+
+  if(suppliers.find(function(s){return s.email===email})){
     document.getElementById('regEmailError').textContent='邮箱已被注册';
     document.getElementById('regEmail').classList.add('error');
+    btn.disabled=false;btn.textContent=origText;btn.classList.remove('btn-loading');
     return;
   }
-  
-  // 注册成功（待审核）
-  const newSupplier={
+
+  var hashedPw=await hashPassword(password);
+
+  var newSupplier={
     supplier_id:generateSupplierId(),
     supplier_name:supplierName,
     username:username,
     email:email,
     phone:phone,
-    password:password,
+    password:hashedPw,
     status:'pending',
     created_at:Date.now()
   };
-  
+
   suppliers.push(newSupplier);
   localStorage.setItem('suppliers',JSON.stringify(suppliers));
-  
-  alert('✅ 注册申请已提交！\n\n我们会在24小时内审核您的申请，请耐心等待。');
+
+  showToast('注册申请已提交！我们会在24小时内审核您的申请','success');
+  btn.disabled=false;btn.textContent=origText;btn.classList.remove('btn-loading');
   switchTab('login');
 }
 
-// 快速登录
+// ========== 快速登录 ==========
+
 function quickLogin(username){
-  const suppliers=JSON.parse(localStorage.getItem('suppliers')||'[]');
-  const supplier=suppliers.find(s=>s.username===username);
+  var suppliers=safeGetJSON('suppliers',[]);
+  var supplier=suppliers.find(function(s){return s.username===username});
   if(supplier){
     loginSuccess(supplier);
+  }else{
+    showToast('测试账号不存在，请刷新页面重试','error');
   }
 }
 
-// 登录成功
+// ========== 登录成功 ==========
+
 function loginSuccess(supplier){
-  // 保存当前供应商信息
   localStorage.setItem('current_supplier',JSON.stringify({
     supplier_id:supplier.supplier_id,
     supplier_name:supplier.supplier_name,
@@ -373,28 +476,62 @@ function loginSuccess(supplier){
     email:supplier.email,
     login_time:Date.now()
   }));
-  
-  // 显示成功页面
+
   document.getElementById('successSupplierId').textContent=supplier.supplier_id;
   document.getElementById('successSupplierName').textContent=supplier.supplier_name;
   document.getElementById('successUsername').textContent=supplier.username;
-  
+
   switchTab('success');
-  
-  // 3秒后跳转
-  setTimeout(()=>{
-    goToAdmin();
-  },3000);
+
+  var seconds=3;
+  var countdownEl=document.getElementById('redirectCountdown');
+  redirectTimer=setInterval(function(){
+    seconds--;
+    if(seconds<=0){
+      clearInterval(redirectTimer);
+      redirectTimer=null;
+      goToAdmin();
+    }else{
+      countdownEl.textContent=seconds+'秒后自动跳转...';
+    }
+  },1000);
 }
 
-// 进入后台
+// ========== 取消跳转 ==========
+
+function cancelRedirect(){
+  if(redirectTimer){clearInterval(redirectTimer);redirectTimer=null;}
+  document.getElementById('redirectCountdown').textContent='已取消自动跳转';
+}
+
+// ========== 进入后台 ==========
+
 function goToAdmin(){
   window.location.href='supplier-admin.html';
 }
 
-// 页面加载
-document.addEventListener('DOMContentLoaded',function(){
-  initSuppliers();
+// ========== 查询注册审核状态 ==========
+
+function checkRegistrationStatus(){
+  var username=sanitize(document.getElementById('loginUsername').value.trim());
+  if(!username){
+    showToast('请先在上方输入供应商账号','error');
+    return;
+  }
+  var suppliers=safeGetJSON('suppliers',[]);
+  var supplier=suppliers.find(function(s){return s.username===username});
+  if(!supplier){
+    showToast('未找到该账号的注册信息','error');
+    return;
+  }
+  var statusMap={pending:'⏳ 待审核 - 请耐心等待',approved:'✅ 已通过 - 可以登录',rejected:'❌ 已拒绝 - 请联系管理员'};
+  showToast('账号 '+username+' 当前状态：'+(statusMap[supplier.status]||supplier.status),'info');
+}
+
+// ========== 页面加载 ==========
+
+document.addEventListener('DOMContentLoaded',async function(){
+  await initSuppliers();
 });
 </script>
 

@@ -3,9 +3,10 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>供应商管理后台 - AI旅游助手</title>
+    <title>供应商管理后台 - 番茄旅行AI</title>
     <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <link href="https://cdn.jsdelivr.net/npm/@fortawesome/fontawesome-free@6.4.0/css/all.min.css" rel="stylesheet">
+    <script src="https://cdn.jsdelivr.net/npm/chart.js@3.9.1/dist/chart.min.js"></script>
     <style>
         :root { --primary: #004E89; --secondary: #FF6B35; }
         body { font-family: 'PingFang SC', 'Microsoft YaHei', sans-serif; }
@@ -22,12 +23,17 @@
         input:checked + .slider:before { transform: translateX(24px); }
         .knowledge-item { border-left: 3px solid transparent; transition: all 0.2s; }
         .knowledge-item:hover { border-left-color: var(--primary); background: #f8fafc; }
+        .toast { position: fixed; top: 20px; right: 20px; padding: 14px 24px; border-radius: 8px; color: #fff; font-size: 14px; font-weight: 600; z-index: 10000; transition: opacity 0.3s; max-width: 360px; }
+        @media (max-width: 768px) {
+            .sidebar-collapse { display: none; }
+            .mobile-toggle { display: block !important; }
+        }
     </style>
 </head>
 <body class="bg-gray-100">
     <div class="flex h-screen">
         <!-- Sidebar -->
-        <aside class="w-64 bg-gradient-to-b from-blue-900 to-blue-800 text-white flex flex-col">
+        <aside class="w-64 bg-gradient-to-b from-blue-900 to-blue-800 text-white flex flex-col sidebar-collapse">
             <div class="p-6 border-b border-blue-700">
                 <div class="flex items-center space-x-3">
                     <div class="w-10 h-10 bg-white rounded-full flex items-center justify-center">
@@ -39,7 +45,7 @@
                     </div>
                 </div>
             </div>
-            
+
             <nav class="flex-1 p-4 space-y-2">
                 <button onclick="showSection('dashboard')" class="sidebar-item w-full text-left px-4 py-3 rounded-lg active" data-section="dashboard">
                     <i class="fas fa-tachometer-alt mr-3"></i>工作台
@@ -60,36 +66,45 @@
                     <i class="fas fa-cog mr-3"></i>系统设置
                 </button>
             </nav>
-            
+
             <div class="p-4 border-t border-blue-700">
                 <div class="flex items-center space-x-3">
                     <div class="w-10 h-10 bg-orange-500 rounded-full flex items-center justify-center">
                         <i class="fas fa-user text-white"></i>
                     </div>
-                    <div>
-                        <p class="font-semibold">供应商账号</p>
-                        <p class="text-xs text-blue-300">vip@travel.com</p>
+                    <div style="flex:1;min-width:0">
+                        <p class="font-semibold truncate" id="sidebarUserName">供应商账号</p>
+                        <p class="text-xs text-blue-300 truncate" id="sidebarUserEmail">-</p>
                     </div>
+                    <button onclick="logout()" class="text-blue-300 hover:text-white flex-shrink-0" title="退出登录">
+                        <i class="fas fa-sign-out-alt text-lg"></i>
+                    </button>
                 </div>
             </div>
         </aside>
 
         <!-- Main Content -->
         <main class="flex-1 overflow-y-auto">
+            <!-- Mobile Header -->
+            <div class="bg-blue-900 text-white p-3 flex items-center justify-between md:hidden">
+                <span class="font-bold">供应商后台</span>
+                <button onclick="logout()"><i class="fas fa-sign-out-alt"></i></button>
+            </div>
+
             <!-- Dashboard Section -->
             <section id="dashboard" class="p-6">
                 <h2 class="text-2xl font-bold text-gray-800 mb-6">
                     <i class="fas fa-tachometer-alt text-blue-600 mr-2"></i>工作台概览
                 </h2>
-                
+
                 <!-- Stats Cards -->
                 <div class="grid grid-cols-1 md:grid-cols-4 gap-6 mb-6">
                     <div class="bg-white rounded-xl p-6 shadow-sm card-hover">
                         <div class="flex items-center justify-between">
                             <div>
                                 <p class="text-gray-500 text-sm">今日订单</p>
-                                <p class="text-3xl font-bold text-blue-600">156</p>
-                                <p class="text-green-500 text-sm mt-1"><i class="fas fa-arrow-up mr-1"></i>+12%</p>
+                                <p class="text-3xl font-bold text-blue-600" id="statTodayOrders">0</p>
+                                <p class="text-green-500 text-sm mt-1" id="statTodayOrdersChange"><i class="fas fa-arrow-up mr-1"></i>-</p>
                             </div>
                             <div class="w-12 h-12 bg-blue-100 rounded-full flex items-center justify-center">
                                 <i class="fas fa-shopping-bag text-blue-600 text-xl"></i>
@@ -100,8 +115,8 @@
                         <div class="flex items-center justify-between">
                             <div>
                                 <p class="text-gray-500 text-sm">今日收入</p>
-                                <p class="text-3xl font-bold text-green-600">¥28,560</p>
-                                <p class="text-green-500 text-sm mt-1"><i class="fas fa-arrow-up mr-1"></i>+8%</p>
+                                <p class="text-3xl font-bold text-green-600" id="statTodayRevenue">¥0</p>
+                                <p class="text-green-500 text-sm mt-1" id="statTodayRevenueChange"><i class="fas fa-arrow-up mr-1"></i>-</p>
                             </div>
                             <div class="w-12 h-12 bg-green-100 rounded-full flex items-center justify-center">
                                 <i class="fas fa-yen-sign text-green-600 text-xl"></i>
@@ -112,8 +127,8 @@
                         <div class="flex items-center justify-between">
                             <div>
                                 <p class="text-gray-500 text-sm">待处理咨询</p>
-                                <p class="text-3xl font-bold text-orange-600">23</p>
-                                <p class="text-red-500 text-sm mt-1"><i class="fas fa-clock mr-1"></i>需要处理</p>
+                                <p class="text-3xl font-bold text-orange-600" id="statPending">0</p>
+                                <p class="text-orange-500 text-sm mt-1" id="statPendingHint"><i class="fas fa-clock mr-1"></i>需要处理</p>
                             </div>
                             <div class="w-12 h-12 bg-orange-100 rounded-full flex items-center justify-center">
                                 <i class="fas fa-comments text-orange-600 text-xl"></i>
@@ -124,7 +139,7 @@
                         <div class="flex items-center justify-between">
                             <div>
                                 <p class="text-gray-500 text-sm">客户满意度</p>
-                                <p class="text-3xl font-bold text-purple-600">96.8%</p>
+                                <p class="text-3xl font-bold text-purple-600" id="statSatisfaction">96.8%</p>
                                 <p class="text-green-500 text-sm mt-1"><i class="fas fa-star mr-1"></i>优秀</p>
                             </div>
                             <div class="w-12 h-12 bg-purple-100 rounded-full flex items-center justify-center">
@@ -149,30 +164,7 @@
                             </tr>
                         </thead>
                         <tbody id="recentOrders">
-                            <tr class="border-b hover:bg-gray-50">
-                                <td class="py-3">#TK20240301001</td>
-                                <td class="py-3">张先生</td>
-                                <td class="py-3"><span class="px-2 py-1 bg-blue-100 text-blue-600 rounded text-sm">机票</span></td>
-                                <td class="py-3 font-semibold">¥2,580</td>
-                                <td class="py-3"><span class="px-2 py-1 bg-green-100 text-green-600 rounded text-sm">已完成</span></td>
-                                <td class="py-3 text-gray-500">10:23</td>
-                            </tr>
-                            <tr class="border-b hover:bg-gray-50">
-                                <td class="py-3">#HT20240301002</td>
-                                <td class="py-3">李女士</td>
-                                <td class="py-3"><span class="px-2 py-1 bg-purple-100 text-purple-600 rounded text-sm">酒店</span></td>
-                                <td class="py-3 font-semibold">¥1,280</td>
-                                <td class="py-3"><span class="px-2 py-1 bg-yellow-100 text-yellow-600 rounded text-sm">待支付</span></td>
-                                <td class="py-3 text-gray-500">10:15</td>
-                            </tr>
-                            <tr class="border-b hover:bg-gray-50">
-                                <td class="py-3">#TJ20240301003</td>
-                                <td class="py-3">王先生</td>
-                                <td class="py-3"><span class="px-2 py-1 bg-orange-100 text-orange-600 rounded text-sm">门票</span></td>
-                                <td class="py-3 font-semibold">¥360</td>
-                                <td class="py-3"><span class="px-2 py-1 bg-blue-100 text-blue-600 rounded text-sm">处理中</span></td>
-                                <td class="py-3 text-gray-500">09:58</td>
-                            </tr>
+                            <tr><td colspan="6" class="py-8 text-center text-gray-400">加载中...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -205,101 +197,6 @@
 
                 <!-- Templates Grid -->
                 <div id="templatesGrid" class="grid grid-cols-1 md:grid-cols-2 gap-4">
-                    <!-- Template 1 -->
-                    <div class="template-card bg-white rounded-xl p-5 border-2 border-gray-100">
-                        <div class="flex items-start justify-between mb-3">
-                            <div>
-                                <span class="px-2 py-1 bg-blue-100 text-blue-600 rounded text-xs">通用</span>
-                                <h4 class="font-bold text-lg mt-2">欢迎语</h4>
-                            </div>
-                            <div class="flex items-center space-x-2">
-                                <label class="switch" style="width:40px;height:22px;">
-                                    <input type="checkbox" checked onchange="toggleTemplate(1)">
-                                    <span class="slider round"></span>
-                                </label>
-                            </div>
-                        </div>
-                        <p class="text-gray-600 text-sm mb-3">亲爱的游客您好！感谢您选择我们的服务。我是您的专属旅游顾问，很高兴为您服务。请告诉我您的出行需求，我会为您推荐最佳方案！</p>
-                        <div class="flex items-center justify-between text-sm text-gray-500">
-                            <span><i class="fas fa-play-circle mr-1"></i>触发: 首次咨询</span>
-                            <div class="space-x-2">
-                                <button onclick="editTemplate(1)" class="text-blue-500 hover:text-blue-700"><i class="fas fa-edit"></i></button>
-                                <button onclick="deleteTemplate(1)" class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Template 2 -->
-                    <div class="template-card bg-white rounded-xl p-5 border-2 border-gray-100">
-                        <div class="flex items-start justify-between mb-3">
-                            <div>
-                                <span class="px-2 py-1 bg-green-100 text-green-600 rounded text-xs">订单</span>
-                                <h4 class="font-bold text-lg mt-2">订单确认</h4>
-                            </div>
-                            <div class="flex items-center space-x-2">
-                                <label class="switch" style="width:40px;height:22px;">
-                                    <input type="checkbox" checked onchange="toggleTemplate(2)">
-                                    <span class="slider round"></span>
-                                </label>
-                            </div>
-                        </div>
-                        <p class="text-gray-600 text-sm mb-3">您的订单已确认！订单号：{order_id}，金额：{amount}。我们将在1小时内发送电子凭证到您的邮箱，请注意查收。如有任何问题，请随时联系客服。</p>
-                        <div class="flex items-center justify-between text-sm text-gray-500">
-                            <span><i class="fas fa-play-circle mr-1"></i>触发: 支付成功</span>
-                            <div class="space-x-2">
-                                <button onclick="editTemplate(2)" class="text-blue-500 hover:text-blue-700"><i class="fas fa-edit"></i></button>
-                                <button onclick="deleteTemplate(2)" class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Template 3 -->
-                    <div class="template-card bg-white rounded-xl p-5 border-2 border-gray-100">
-                        <div class="flex items-start justify-between mb-3">
-                            <div>
-                                <span class="px-2 py-1 bg-orange-100 text-orange-600 rounded text-xs">售后</span>
-                                <h4 class="font-bold text-lg mt-2">退款说明</h4>
-                            </div>
-                            <div class="flex items-center space-x-2">
-                                <label class="switch" style="width:40px;height:22px;">
-                                    <input type="checkbox" onchange="toggleTemplate(3)">
-                                    <span class="slider round"></span>
-                                </label>
-                            </div>
-                        </div>
-                        <p class="text-gray-600 text-sm mb-3">您的退款申请已受理！退款将在1-7个工作日内原路返回至您的支付账户。具体到账时间根据支付渠道不同略有差异，感谢您的理解与支持。</p>
-                        <div class="flex items-center justify-between text-sm text-gray-500">
-                            <span><i class="fas fa-play-circle mr-1"></i>触发: 退款申请</span>
-                            <div class="space-x-2">
-                                <button onclick="editTemplate(3)" class="text-blue-500 hover:text-blue-700"><i class="fas fa-edit"></i></button>
-                                <button onclick="deleteTemplate(3)" class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button>
-                            </div>
-                        </div>
-                    </div>
-
-                    <!-- Template 4 -->
-                    <div class="template-card bg-white rounded-xl p-5 border-2 border-gray-100">
-                        <div class="flex items-start justify-between mb-3">
-                            <div>
-                                <span class="px-2 py-1 bg-purple-100 text-purple-600 rounded text-xs">咨询</span>
-                                <h4 class="font-bold text-lg mt-2">非工作时间</h4>
-                            </div>
-                            <div class="flex items-center space-x-2">
-                                <label class="switch" style="width:40px;height:22px;">
-                                    <input type="checkbox" checked onchange="toggleTemplate(4)">
-                                    <span class="slider round"></span>
-                                </label>
-                            </div>
-                        </div>
-                        <p class="text-gray-600 text-sm mb-3">您好！感谢您的咨询。当前非工作时间，您的消息已记录，我们将在工作时间内（9:00-21:00）尽快回复您。如有紧急情况，请拨打客服热线：400-888-8888</p>
-                        <div class="flex items-center justify-between text-sm text-gray-500">
-                            <span><i class="fas fa-clock mr-1"></i>触发: 非工作时间</span>
-                            <div class="space-x-2">
-                                <button onclick="editTemplate(4)" class="text-blue-500 hover:text-blue-700"><i class="fas fa-edit"></i></button>
-                                <button onclick="deleteTemplate(4)" class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button>
-                            </div>
-                        </div>
-                    </div>
                 </div>
             </section>
 
@@ -307,10 +204,10 @@
             <section id="knowledge" class="hidden p-6">
                 <div class="flex items-center justify-between mb-6">
                     <h2 class="text-2xl font-bold text-gray-800">
-                        <i class="fas fa-brain text-blue-600 mr-2"></i>IMA知识库管理
+                        <i class="fas fa-brain text-blue-600 mr-2"></i>知识库管理
                     </h2>
                     <div class="flex space-x-3">
-                        <button onclick="syncKnowledge()" class="px-4 py-2 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50">
+                        <button id="syncKnowledgeBtn" onclick="syncKnowledge()" class="px-4 py-2 border border-blue-600 text-blue-600 rounded-lg hover:bg-blue-50">
                             <i class="fas fa-sync mr-2"></i>同步知识库
                         </button>
                         <button onclick="openKnowledgeModal()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
@@ -328,7 +225,7 @@
                             </div>
                             <div>
                                 <p class="text-gray-500 text-sm">知识条目</p>
-                                <p class="text-2xl font-bold text-gray-800">1,256</p>
+                                <p class="text-2xl font-bold text-gray-800" id="knowledgeTotalCount">0</p>
                             </div>
                         </div>
                     </div>
@@ -339,7 +236,7 @@
                             </div>
                             <div>
                                 <p class="text-gray-500 text-sm">已启用</p>
-                                <p class="text-2xl font-bold text-gray-800">1,089</p>
+                                <p class="text-2xl font-bold text-gray-800" id="knowledgeEnabledCount">0</p>
                             </div>
                         </div>
                     </div>
@@ -350,7 +247,7 @@
                             </div>
                             <div>
                                 <p class="text-gray-500 text-sm">本周查询</p>
-                                <p class="text-2xl font-bold text-gray-800">15,678</p>
+                                <p class="text-2xl font-bold text-gray-800" id="knowledgeWeeklyQueries">0</p>
                             </div>
                         </div>
                     </div>
@@ -363,16 +260,14 @@
                             <input type="text" id="knowledgeSearch" placeholder="搜索知识内容..." class="w-full pl-10 pr-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500">
                             <i class="fas fa-search absolute left-3 top-3 text-gray-400"></i>
                         </div>
-                        <select class="px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500">
+                        <select id="knowledgeCategoryFilter" class="px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500">
                             <option>全部分类</option>
-                            <option>景点信息</option>
-                            <option>酒店攻略</option>
-                            <option>美食推荐</option>
-                            <option>交通指南</option>
+                            <option>景点</option>
+                            <option>酒店</option>
+                            <option>美食</option>
+                            <option>交通</option>
+                            <option>政策</option>
                         </select>
-                        <button class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                            <i class="fas fa-search mr-2"></i>搜索
-                        </button>
                     </div>
                 </div>
 
@@ -382,76 +277,7 @@
                         <h3 class="font-bold text-gray-800">知识列表</h3>
                     </div>
                     <div id="knowledgeList" class="divide-y">
-                        <div class="knowledge-item p-4">
-                            <div class="flex items-start justify-between">
-                                <div class="flex-1">
-                                    <div class="flex items-center space-x-2 mb-2">
-                                        <span class="px-2 py-1 bg-green-100 text-green-600 rounded text-xs">景点</span>
-                                        <span class="px-2 py-1 bg-blue-100 text-blue-600 rounded text-xs">热门</span>
-                                        <h4 class="font-semibold text-gray-800">故宫博物院门票信息</h4>
-                                    </div>
-                                    <p class="text-gray-600 text-sm">故宫门票分为大门票和钟表馆、珍宝馆等专题展馆。大门票旺季60元/淡季40元。珍宝馆10元，钟表馆10元。开放时间：08:30-17:00...</p>
-                                    <div class="flex items-center space-x-4 mt-2 text-xs text-gray-500">
-                                        <span><i class="fas fa-search mr-1"></i>本周查询: 1,256次</span>
-                                        <span><i class="fas fa-clock mr-1"></i>更新: 2024-02-28</span>
-                                    </div>
-                                </div>
-                                <div class="flex items-center space-x-2 ml-4">
-                                    <label class="switch" style="width:40px;height:22px;">
-                                        <input type="checkbox" checked>
-                                        <span class="slider round"></span>
-                                    </label>
-                                    <button class="text-blue-500 hover:text-blue-700"><i class="fas fa-edit"></i></button>
-                                    <button class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="knowledge-item p-4">
-                            <div class="flex items-start justify-between">
-                                <div class="flex-1">
-                                    <div class="flex items-center space-x-2 mb-2">
-                                        <span class="px-2 py-1 bg-purple-100 text-purple-600 rounded text-xs">酒店</span>
-                                        <h4 class="font-semibold text-gray-800">三亚亚特兰蒂斯酒店介绍</h4>
-                                    </div>
-                                    <p class="text-gray-600 text-sm">三亚亚特兰蒂斯是集度假酒店、娱乐、餐饮、购物、演艺、国际会展及海洋乐园于一体的综合性度假目的地。海景房均价3000+...</p>
-                                    <div class="flex items-center space-x-4 mt-2 text-xs text-gray-500">
-                                        <span><i class="fas fa-search mr-1"></i>本周查询: 856次</span>
-                                        <span><i class="fas fa-clock mr-1"></i>更新: 2024-02-25</span>
-                                    </div>
-                                </div>
-                                <div class="flex items-center space-x-2 ml-4">
-                                    <label class="switch" style="width:40px;height:22px;">
-                                        <input type="checkbox" checked>
-                                        <span class="slider round"></span>
-                                    </label>
-                                    <button class="text-blue-500 hover:text-blue-700"><i class="fas fa-edit"></i></button>
-                                    <button class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button>
-                                </div>
-                            </div>
-                        </div>
-                        <div class="knowledge-item p-4">
-                            <div class="flex items-start justify-between">
-                                <div class="flex-1">
-                                    <div class="flex items-center space-x-2 mb-2">
-                                        <span class="px-2 py-1 bg-orange-100 text-orange-600 rounded text-xs">美食</span>
-                                        <h4 class="font-semibold text-gray-800">成都必吃美食清单</h4>
-                                    </div>
-                                    <p class="text-gray-600 text-sm">成都美食推荐：小龙坎火锅、蜀大侠火锅、玉林串串香、降龙爪爪、廖记棒棒鸡、夫妻肺片、钟水饺、龙抄手等...</p>
-                                    <div class="flex items-center space-x-4 mt-2 text-xs text-gray-500">
-                                        <span><i class="fas fa-search mr-1"></i>本周查询: 2,156次</span>
-                                        <span><i class="fas fa-clock mr-1"></i>更新: 2024-03-01</span>
-                                    </div>
-                                </div>
-                                <div class="flex items-center space-x-2 ml-4">
-                                    <label class="switch" style="width:40px;height:22px;">
-                                        <input type="checkbox" checked>
-                                        <span class="slider round"></span>
-                                    </label>
-                                    <button class="text-blue-500 hover:text-blue-700"><i class="fas fa-edit"></i></button>
-                                    <button class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button>
-                                </div>
-                            </div>
-                        </div>
+                        <div class="p-8 text-center text-gray-400">加载中...</div>
                     </div>
                 </div>
             </section>
@@ -461,20 +287,20 @@
                 <h2 class="text-2xl font-bold text-gray-800 mb-6">
                     <i class="fas fa-shopping-cart text-blue-600 mr-2"></i>订单管理
                 </h2>
-                
+
                 <!-- Filter Tabs -->
                 <div class="bg-white rounded-xl shadow-sm p-4 mb-6">
-                    <div class="flex items-center space-x-4 overflow-x-auto">
-                        <button class="px-4 py-2 bg-blue-600 text-white rounded-lg" onclick="filterOrders('all')">全部订单</button>
-                        <button class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg" onclick="filterOrders('pending')">待支付</button>
-                        <button class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg" onclick="filterOrders('processing')">处理中</button>
-                        <button class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg" onclick="filterOrders('completed')">已完成</button>
-                        <button class="px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg" onclick="filterOrders('cancelled')">已取消</button>
+                    <div class="flex items-center space-x-2 overflow-x-auto" id="orderFilterBtns">
+                        <button class="order-filter-btn px-4 py-2 bg-blue-600 text-white rounded-lg" data-filter="all" onclick="filterOrders('all',this)">全部订单</button>
+                        <button class="order-filter-btn px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg" data-filter="pending" onclick="filterOrders('pending',this)">待支付</button>
+                        <button class="order-filter-btn px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg" data-filter="processing" onclick="filterOrders('processing',this)">处理中</button>
+                        <button class="order-filter-btn px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg" data-filter="completed" onclick="filterOrders('completed',this)">已完成</button>
+                        <button class="order-filter-btn px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg" data-filter="cancelled" onclick="filterOrders('cancelled',this)">已取消</button>
                     </div>
                 </div>
 
                 <!-- Orders Table -->
-                <div class="bg-white rounded-xl shadow-sm">
+                <div class="bg-white rounded-xl shadow-sm overflow-x-auto">
                     <table class="w-full">
                         <thead>
                             <tr class="text-left text-gray-500 text-sm border-b bg-gray-50">
@@ -488,55 +314,8 @@
                                 <th class="p-4">操作</th>
                             </tr>
                         </thead>
-                        <tbody>
-                            <tr class="border-b hover:bg-gray-50">
-                                <td class="p-4 font-mono text-sm">#TK20240301001</td>
-                                <td class="p-4">
-                                    <p class="font-semibold">张先生</p>
-                                    <p class="text-xs text-gray-500">138****8888</p>
-                                </td>
-                                <td class="p-4"><span class="px-2 py-1 bg-blue-100 text-blue-600 rounded text-sm">机票</span></td>
-                                <td class="p-4 text-sm">北京→三亚<br>2024-03-15</td>
-                                <td class="p-4 font-bold">¥2,580</td>
-                                <td class="p-4"><span class="px-2 py-1 bg-green-100 text-green-600 rounded text-sm">已完成</span></td>
-                                <td class="p-4 text-sm text-gray-500">03-01 10:23</td>
-                                <td class="p-4">
-                                    <button class="text-blue-500 hover:text-blue-700 mr-2"><i class="fas fa-eye"></i></button>
-                                    <button class="text-gray-500 hover:text-gray-700"><i class="fas fa-ellipsis-v"></i></button>
-                                </td>
-                            </tr>
-                            <tr class="border-b hover:bg-gray-50">
-                                <td class="p-4 font-mono text-sm">#HT20240301002</td>
-                                <td class="p-4">
-                                    <p class="font-semibold">李女士</p>
-                                    <p class="text-xs text-gray-500">139****6666</p>
-                                </td>
-                                <td class="p-4"><span class="px-2 py-1 bg-purple-100 text-purple-600 rounded text-sm">酒店</span></td>
-                                <td class="p-4 text-sm">三亚亚特兰蒂斯<br>3晚 海景房</td>
-                                <td class="p-4 font-bold">¥8,880</td>
-                                <td class="p-4"><span class="px-2 py-1 bg-yellow-100 text-yellow-600 rounded text-sm">待支付</span></td>
-                                <td class="p-4 text-sm text-gray-500">03-01 10:15</td>
-                                <td class="p-4">
-                                    <button class="text-blue-500 hover:text-blue-700 mr-2"><i class="fas fa-eye"></i></button>
-                                    <button class="text-green-500 hover:text-green-700"><i class="fas fa-check"></i></button>
-                                </td>
-                            </tr>
-                            <tr class="border-b hover:bg-gray-50">
-                                <td class="p-4 font-mono text-sm">#TJ20240301003</td>
-                                <td class="p-4">
-                                    <p class="font-semibold">王先生</p>
-                                    <p class="text-xs text-gray-500">136****5555</p>
-                                </td>
-                                <td class="p-4"><span class="px-2 py-1 bg-orange-100 text-orange-600 rounded text-sm">门票</span></td>
-                                <td class="p-4 text-sm">迪士尼门票<br>2张 成人票</td>
-                                <td class="p-4 font-bold">¥950</td>
-                                <td class="p-4"><span class="px-2 py-1 bg-blue-100 text-blue-600 rounded text-sm">处理中</span></td>
-                                <td class="p-4 text-sm text-gray-500">03-01 09:58</td>
-                                <td class="p-4">
-                                    <button class="text-blue-500 hover:text-blue-700 mr-2"><i class="fas fa-eye"></i></button>
-                                    <button class="text-green-500 hover:text-green-700"><i class="fas fa-check"></i></button>
-                                </td>
-                            </tr>
+                        <tbody id="ordersTableBody">
+                            <tr><td colspan="8" class="p-8 text-center text-gray-400">加载中...</td></tr>
                         </tbody>
                     </table>
                 </div>
@@ -547,35 +326,15 @@
                 <h2 class="text-2xl font-bold text-gray-800 mb-6">
                     <i class="fas fa-chart-line text-blue-600 mr-2"></i>数据统计
                 </h2>
-                
-                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <!-- Revenue Chart Placeholder -->
-                    <div class="bg-white rounded-xl shadow-sm p-6">
-                        <h3 class="font-bold text-lg mb-4">收入趋势</h3>
-                        <div class="h-64 flex items-center justify-center bg-gray-50 rounded-lg">
-                            <div class="text-center text-gray-500">
-                                <i class="fas fa-chart-area text-4xl mb-2"></i>
-                                <p>收入图表（近30天）</p>
-                                <p class="text-sm">总收入: ¥856,280</p>
-                            </div>
-                        </div>
-                    </div>
 
-                    <!-- Order Chart -->
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                     <div class="bg-white rounded-xl shadow-sm p-6">
-                        <h3 class="font-bold text-lg mb-4">订单分布</h3>
-                        <div class="h-64 flex items-center justify-center bg-gray-50 rounded-lg">
-                            <div class="text-center text-gray-500">
-                                <i class="fas fa-chart-pie text-4xl mb-2"></i>
-                                <p>订单类型分布</p>
-                                <div class="mt-4 space-y-2 text-sm">
-                                    <p><span class="inline-block w-3 h-3 bg-blue-500 rounded mr-2"></span>机票 45%</p>
-                                    <p><span class="inline-block w-3 h-3 bg-purple-500 rounded mr-2"></span>酒店 30%</p>
-                                    <p><span class="inline-block w-3 h-3 bg-orange-500 rounded mr-2"></span>门票 15%</p>
-                                    <p><span class="inline-block w-3 h-3 bg-green-500 rounded mr-2"></span>其他 10%</p>
-                                </div>
-                            </div>
-                        </div>
+                        <h3 class="font-bold text-lg mb-4">收入趋势（近7天）</h3>
+                        <div style="position:relative;height:300px"><canvas id="supplierRevenueChart"></canvas></div>
+                    </div>
+                    <div class="bg-white rounded-xl shadow-sm p-6">
+                        <h3 class="font-bold text-lg mb-4">订单类型分布</h3>
+                        <div style="position:relative;height:300px"><canvas id="supplierOrderChart"></canvas></div>
                     </div>
                 </div>
             </section>
@@ -585,28 +344,28 @@
                 <h2 class="text-2xl font-bold text-gray-800 mb-6">
                     <i class="fas fa-cog text-blue-600 mr-2"></i>系统设置
                 </h2>
-                
+
                 <div class="bg-white rounded-xl shadow-sm p-6 mb-6">
                     <h3 class="font-bold text-lg mb-4">供应商信息</h3>
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">公司名称</label>
-                            <input type="text" value="携程旅游深圳分公司" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500">
+                            <input type="text" id="settingsCompanyName" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">联系人</label>
-                            <input type="text" value="陈经理" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500">
+                            <input type="text" id="settingsContact" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">联系电话</label>
-                            <input type="text" value="400-888-8888" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500">
+                            <input type="text" id="settingsPhone" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500">
                         </div>
                         <div>
                             <label class="block text-sm font-medium text-gray-700 mb-2">邮箱</label>
-                            <input type="email" value="vip@travel.com" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500">
+                            <input type="email" id="settingsEmail" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500">
                         </div>
                     </div>
-                    <button class="mt-6 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                    <button onclick="saveSettings()" class="mt-6 px-6 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
                         <i class="fas fa-save mr-2"></i>保存设置
                     </button>
                 </div>
@@ -618,7 +377,7 @@
     <div id="templateModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl w-full max-w-2xl">
             <div class="px-6 py-4 border-b flex items-center justify-between">
-                <h3 class="text-lg font-bold text-gray-800">新建自动回复模板</h3>
+                <h3 class="text-lg font-bold text-gray-800" id="templateModalTitle">新建自动回复模板</h3>
                 <button onclick="closeTemplateModal()" class="text-gray-500 hover:text-gray-700">
                     <i class="fas fa-times text-xl"></i>
                 </button>
@@ -648,7 +407,7 @@
                 </div>
                 <div id="keywordInput" class="hidden">
                     <label class="block text-sm font-medium text-gray-700 mb-1">关键词（用逗号分隔）</label>
-                    <input type="text" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500" placeholder="例如：机票,预订">
+                    <input type="text" id="templateKeywords" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500" placeholder="例如：机票,预订">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">回复内容</label>
@@ -671,7 +430,7 @@
     <div id="knowledgeModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
         <div class="bg-white rounded-2xl w-full max-w-2xl">
             <div class="px-6 py-4 border-b flex items-center justify-between">
-                <h3 class="text-lg font-bold text-gray-800">添加知识条目</h3>
+                <h3 class="text-lg font-bold text-gray-800" id="knowledgeModalTitle">添加知识条目</h3>
                 <button onclick="closeKnowledgeModal()" class="text-gray-500 hover:text-gray-700">
                     <i class="fas fa-times text-xl"></i>
                 </button>
@@ -693,7 +452,7 @@
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">标签（用逗号分隔）</label>
-                    <input type="text" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500" placeholder="例如：热门,推荐,必去">
+                    <input type="text" id="knowledgeTags" class="w-full px-4 py-2 border rounded-lg focus:outline-none focus:border-blue-500" placeholder="例如：热门,推荐,必去">
                 </div>
                 <div>
                     <label class="block text-sm font-medium text-gray-700 mb-1">详细内容</label>
@@ -707,141 +466,668 @@
         </div>
     </div>
 
+    <!-- Order Detail Modal -->
+    <div id="orderDetailModal" class="hidden fixed inset-0 bg-black bg-opacity-50 z-50 flex items-center justify-center p-4">
+        <div class="bg-white rounded-2xl w-full max-w-lg">
+            <div class="px-6 py-4 border-b flex items-center justify-between">
+                <h3 class="text-lg font-bold text-gray-800">订单详情</h3>
+                <button onclick="closeOrderDetailModal()" class="text-gray-500 hover:text-gray-700">
+                    <i class="fas fa-times text-xl"></i>
+                </button>
+            </div>
+            <div class="p-6 space-y-3" id="orderDetailContent">
+            </div>
+            <div class="px-6 py-4 border-t flex justify-end">
+                <button onclick="closeOrderDetailModal()" class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">关闭</button>
+            </div>
+        </div>
+    </div>
+
     <script>
-        let templates = JSON.parse(localStorage.getItem('autoTemplates') || JSON.stringify([
-            { id: 1, name: '欢迎语', category: 'common', trigger: 'first', content: '亲爱的游客您好！感谢您选择我们的服务。我是您的专属旅游顾问...', enabled: true },
-            { id: 2, name: '订单确认', category: 'order', trigger: 'keyword', keywords: ['确认', '支付'], content: '您的订单已确认！', enabled: true },
-            { id: 3, name: '退款说明', category: 'service', trigger: 'keyword', keywords: ['退款'], content: '您的退款申请已受理...', enabled: false },
-            { id: 4, name: '非工作时间', category: 'consult', trigger: 'time', content: '您好！当前非工作时间...', enabled: true }
-        ]));
+    // ========== 工具函数 ==========
 
-        let knowledgeItems = JSON.parse(localStorage.getItem('knowledgeItems') || JSON.stringify([
-            { id: 1, title: '故宫博物院门票信息', category: 'attraction', tags: ['热门', '景点'], content: '故宫门票分为大门票和专题展馆...', queryCount: 1256, updatedAt: '2024-02-28' },
-            { id: 2, title: '三亚亚特兰蒂斯酒店', category: 'hotel', tags: ['酒店'], content: '三亚亚特兰蒂斯是综合性度假目的地...', queryCount: 856, updatedAt: '2024-02-25' }
-        ]));
+    function safeGetJSON(key,fallback){
+        try{
+            var data=localStorage.getItem(key);
+            return data?JSON.parse(data):fallback;
+        }catch(e){
+            return fallback;
+        }
+    }
 
-        function showSection(sectionId) {
-            document.querySelectorAll('section').forEach(s => s.classList.add('hidden'));
-            document.getElementById(sectionId).classList.remove('hidden');
-            document.querySelectorAll('.sidebar-item').forEach(item => {
-                item.classList.remove('active');
-                if (item.dataset.section === sectionId) item.classList.add('active');
+    function sanitize(str){
+        if(typeof str!=='string')return '';
+        var div=document.createElement('div');
+        div.textContent=str;
+        return div.innerHTML;
+    }
+
+    function showToast(message,type){
+        type=type||'success';
+        var toast=document.createElement('div');
+        toast.className='toast';
+        toast.style.background=type==='success'?'#00C9A7':type==='error'?'#ef4444':'#FF6B35';
+        toast.textContent=message;
+        document.body.appendChild(toast);
+        setTimeout(function(){toast.style.opacity='0'},2500);
+        setTimeout(function(){toast.remove()},3000);
+    }
+
+    // ========== 数据 ==========
+
+    var templates=[];
+    var knowledgeItems=[];
+    var editingTemplateId=null;
+    var editingKnowledgeId=null;
+    var currentOrderFilter='all';
+    var supplierCharts={};
+
+    // ========== Section导航 ==========
+
+    function showSection(sectionId){
+        document.querySelectorAll('main>section').forEach(function(s){s.classList.add('hidden')});
+        document.getElementById(sectionId).classList.remove('hidden');
+        document.querySelectorAll('.sidebar-item').forEach(function(item){
+            item.classList.remove('active');
+            if(item.dataset.section===sectionId)item.classList.add('active');
+        });
+        if(sectionId==='analytics')renderAnalytics();
+    }
+
+    // ========== 登录鉴权 ==========
+
+    function checkAuth(){
+        var currentSupplier=safeGetJSON('current_supplier',null);
+        if(!currentSupplier||!currentSupplier.supplier_id){
+            window.location.href='supplier-login.html';
+            return null;
+        }
+        return currentSupplier;
+    }
+
+    // ========== 退出登录 ==========
+
+    function logout(){
+        if(confirm('确定要退出登录吗？')){
+            localStorage.removeItem('current_supplier');
+            window.location.href='supplier-login.html';
+        }
+    }
+
+    // ========== 初始化供应商数据到侧边栏 ==========
+
+    function initSupplierData(supplier){
+        document.getElementById('sidebarUserName').textContent=supplier.supplier_name||supplier.username;
+        document.getElementById('sidebarUserEmail').textContent=supplier.email||'';
+    }
+
+    // ========== 初始化订单数据 ==========
+
+    function initOrders(){
+        var supplierOrders=safeGetJSON('supplier_orders',[]);
+        if(supplierOrders.length>0)return supplierOrders;
+
+        var types=['机票','酒店','门票','包车','度假'];
+        var statuses=['已完成','待支付','处理中','已取消'];
+        var names=['张先生','李女士','王先生','赵女士','刘先生','陈女士','杨先生','黄女士','周先生','吴女士'];
+        var products=[
+            '北京→三亚','三亚亚特兰蒂斯 3晚 海景房','迪士尼门票 2张 成人票',
+            '普吉岛一日游 浮潜+沙滩','巴厘岛度假套餐 5天4晚','成都→九寨沟 机票',
+            '曼谷酒店 2晚 豪华房','长城门票+缆车 往返','普吉岛机场接送',
+            '三亚湾日落游艇','甲米四岛游','清迈古城半日游','曼谷大皇宫门票',
+            '新加坡环球影城门票','大阪→京都 新干线','巴厘岛SPA体验',
+            '甲米攀岩体验','曼谷→清迈 机票','吉隆坡双子塔门票','沙巴红树林萤火虫'
+        ];
+        var currentSupplier=safeGetJSON('current_supplier',{});
+        var now=Date.now();
+
+        for(var i=0;i<20;i++){
+            var date=new Date(now-Math.random()*30*24*60*60*1000);
+            supplierOrders.push({
+                id:'ORD'+(now-i*873456).toString(36).toUpperCase().slice(-8),
+                customer:names[Math.floor(Math.random()*names.length)],
+                phone:'1'+(30+Math.floor(Math.random()*69))+'****'+(1000+Math.floor(Math.random()*9000)),
+                type:types[Math.floor(Math.random()*types.length)],
+                product:products[Math.floor(Math.random()*products.length)],
+                amount:Math.floor(Math.random()*8000)+200,
+                status:statuses[Math.floor(Math.random()*statuses.length)],
+                date:date.toISOString().split('T')[0],
+                time:date.getHours().toString().padStart(2,'0')+':'+date.getMinutes().toString().padStart(2,'0'),
+                supplier_id:currentSupplier.supplier_id||'s_gys001'
             });
         }
 
-        function toggleAutoReply() {
-            const enabled = document.getElementById('autoReplyEnabled').checked;
-            localStorage.setItem('autoReplyEnabled', enabled);
+        localStorage.setItem('supplier_orders',JSON.stringify(supplierOrders));
+        return supplierOrders;
+    }
+
+    // ========== 仪表盘 ==========
+
+    function renderDashboard(){
+        var supplierOrders=safeGetJSON('supplier_orders',[]);
+        var today=new Date().toISOString().split('T')[0];
+        var todayOrders=supplierOrders.filter(function(o){return o.date===today});
+        var todayRevenue=todayOrders.reduce(function(sum,o){return sum+(o.amount||0)},0);
+        var pending=supplierOrders.filter(function(o){return o.status==='处理中'||o.status==='待支付'}).length;
+
+        document.getElementById('statTodayOrders').textContent=todayOrders.length;
+        document.getElementById('statTodayRevenue').textContent='¥'+todayRevenue.toLocaleString();
+        document.getElementById('statPending').textContent=pending;
+
+        // 最近订单表格
+        var typeColors={'机票':'blue','酒店':'purple','门票':'orange','包车':'green','度假':'red'};
+        var statusColors={'已完成':'green','待支付':'yellow','处理中':'blue','已取消':'red'};
+        var recent=supplierOrders.slice(-5).reverse();
+        var tbody=document.getElementById('recentOrders');
+
+        if(recent.length===0){
+            tbody.innerHTML='<tr><td colspan="6" class="py-8 text-center text-gray-400">暂无订单数据</td></tr>';
+            return;
         }
 
-        function toggleTemplate(id) {
-            const template = templates.find(t => t.id === id);
-            if (template) template.enabled = !template.enabled;
-            localStorage.setItem('autoTemplates', JSON.stringify(templates));
+        tbody.innerHTML=recent.map(function(o){
+            var tc=typeColors[o.type]||'blue';
+            var sc=statusColors[o.status]||'blue';
+            return '<tr class="border-b hover:bg-gray-50">'+
+                '<td class="py-3 font-mono text-sm">#'+sanitize(o.id)+'</td>'+
+                '<td class="py-3">'+sanitize(o.customer)+'</td>'+
+                '<td class="py-3"><span class="px-2 py-1 bg-'+tc+'-100 text-'+tc+'-600 rounded text-sm">'+sanitize(o.type)+'</span></td>'+
+                '<td class="py-3 font-semibold">¥'+(o.amount||0).toLocaleString()+'</td>'+
+                '<td class="py-3"><span class="px-2 py-1 bg-'+sc+'-100 text-'+sc+'-600 rounded text-sm">'+sanitize(o.status)+'</span></td>'+
+                '<td class="py-3 text-gray-500">'+sanitize(o.date)+' '+sanitize(o.time)+'</td>'+
+            '</tr>';
+        }).join('');
+    }
+
+    // ========== 自动回复 ==========
+
+    function toggleAutoReply(){
+        var enabled=document.getElementById('autoReplyEnabled').checked;
+        localStorage.setItem('autoReplyEnabled',enabled);
+    }
+
+    function renderTemplates(){
+        var catLabels={common:'通用',order:'订单',service:'售后',consult:'咨询'};
+        var catColors={common:'blue',order:'green',service:'orange',consult:'purple'};
+        var triggerLabels={all:'所有消息',keyword:'关键词触发',first:'首次咨询',time:'非工作时间'};
+        var grid=document.getElementById('templatesGrid');
+
+        if(templates.length===0){
+            grid.innerHTML='<div class="col-span-2 text-center py-12 text-gray-500"><i class="fas fa-inbox text-4xl mb-2 block"></i><p>暂无模板，点击"新建模板"添加</p></div>';
+            return;
         }
 
-        function openTemplateModal() {
-            document.getElementById('templateModal').classList.remove('hidden');
+        grid.innerHTML=templates.map(function(t){
+            var color=catColors[t.category]||'blue';
+            return '<div class="template-card bg-white rounded-xl p-5 border-2 border-gray-100">'+
+                '<div class="flex items-start justify-between mb-3">'+
+                    '<div>'+
+                        '<span class="px-2 py-1 bg-'+color+'-100 text-'+color+'-600 rounded text-xs">'+sanitize(catLabels[t.category]||t.category)+'</span>'+
+                        '<h4 class="font-bold text-lg mt-2">'+sanitize(t.name)+'</h4>'+
+                    '</div>'+
+                    '<label class="switch" style="width:40px;height:22px;">'+
+                        '<input type="checkbox"'+(t.enabled?' checked':'')+' onchange="toggleTemplate('+t.id+')">'+
+                        '<span class="slider round"></span>'+
+                    '</label>'+
+                '</div>'+
+                '<p class="text-gray-600 text-sm mb-3">'+sanitize((t.content||'').substring(0,120))+(t.content&&t.content.length>120?'...':'')+'</p>'+
+                '<div class="flex items-center justify-between text-sm text-gray-500">'+
+                    '<span><i class="fas fa-play-circle mr-1"></i>触发: '+(triggerLabels[t.trigger]||t.trigger)+'</span>'+
+                    '<div class="space-x-2">'+
+                        '<button onclick="editTemplate('+t.id+')" class="text-blue-500 hover:text-blue-700"><i class="fas fa-edit"></i></button>'+
+                        '<button onclick="deleteTemplate('+t.id+')" class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button>'+
+                    '</div>'+
+                '</div>'+
+            '</div>';
+        }).join('');
+    }
+
+    function toggleTemplate(id){
+        var t=templates.find(function(t){return t.id===id});
+        if(t)t.enabled=!t.enabled;
+        localStorage.setItem('autoTemplates',JSON.stringify(templates));
+    }
+
+    function openTemplateModal(){
+        document.getElementById('templateModal').classList.remove('hidden');
+    }
+
+    function closeTemplateModal(){
+        document.getElementById('templateModal').classList.add('hidden');
+        document.getElementById('templateName').value='';
+        document.getElementById('templateCategory').value='common';
+        document.getElementById('templateTrigger').value='all';
+        document.getElementById('templateContent').value='';
+        document.getElementById('templateEnabled').checked=true;
+        document.getElementById('templateKeywords').value='';
+        document.getElementById('keywordInput').classList.add('hidden');
+        document.getElementById('templateModalTitle').textContent='新建自动回复模板';
+        editingTemplateId=null;
+    }
+
+    function saveTemplate(){
+        var name=sanitize(document.getElementById('templateName').value.trim());
+        var content=sanitize(document.getElementById('templateContent').value.trim());
+        if(!name||!content){
+            showToast('请填写模板名称和内容','error');
+            return;
         }
 
-        function closeTemplateModal() {
-            document.getElementById('templateModal').classList.add('hidden');
-            document.getElementById('templateName').value = '';
-            document.getElementById('templateContent').value = '';
-        }
-
-        function saveTemplate() {
-            const name = document.getElementById('templateName').value.trim();
-            const content = document.getElementById('templateContent').value.trim();
-            if (!name || !content) {
-                alert('请填写模板名称和内容');
-                return;
+        if(editingTemplateId){
+            var idx=templates.findIndex(function(t){return t.id===editingTemplateId});
+            if(idx!==-1){
+                templates[idx].name=name;
+                templates[idx].category=document.getElementById('templateCategory').value;
+                templates[idx].trigger=document.getElementById('templateTrigger').value;
+                templates[idx].content=content;
+                templates[idx].enabled=document.getElementById('templateEnabled').checked;
             }
-            const newTemplate = {
-                id: Date.now(),
-                name,
-                category: document.getElementById('templateCategory').value,
-                trigger: document.getElementById('templateTrigger').value,
-                content,
-                enabled: document.getElementById('templateEnabled').checked
-            };
-            templates.push(newTemplate);
-            localStorage.setItem('autoTemplates', JSON.stringify(templates));
-            closeTemplateModal();
-            location.reload();
-        }
-
-        function editTemplate(id) {
-            const template = templates.find(t => t.id === id);
-            if (template) {
-                document.getElementById('templateName').value = template.name;
-                document.getElementById('templateCategory').value = template.category;
-                document.getElementById('templateTrigger').value = template.trigger;
-                document.getElementById('templateContent').value = template.content;
-                templates = templates.filter(t => t.id !== id);
-                openTemplateModal();
-            }
-        }
-
-        function deleteTemplate(id) {
-            if (confirm('确定要删除此模板吗？')) {
-                templates = templates.filter(t => t.id !== id);
-                localStorage.setItem('autoTemplates', JSON.stringify(templates));
-                location.reload();
-            }
-        }
-
-        document.getElementById('templateTrigger')?.addEventListener('change', function() {
-            document.getElementById('keywordInput').classList.toggle('hidden', this.value !== 'keyword');
-        });
-
-        function openKnowledgeModal() {
-            document.getElementById('knowledgeModal').classList.remove('hidden');
-        }
-
-        function closeKnowledgeModal() {
-            document.getElementById('knowledgeModal').classList.add('hidden');
-        }
-
-        function saveKnowledge() {
-            const title = document.getElementById('knowledgeTitle').value.trim();
-            const content = document.getElementById('knowledgeContent').value.trim();
-            if (!title || !content) {
-                alert('请填写标题和内容');
-                return;
-            }
-            const newItem = {
-                id: Date.now(),
-                title,
-                category: document.getElementById('knowledgeCategory').value,
-                content,
-                queryCount: 0,
-                updatedAt: new Date().toISOString().split('T')[0]
-            };
-            knowledgeItems.push(newItem);
-            localStorage.setItem('knowledgeItems', JSON.stringify(knowledgeItems));
-            closeKnowledgeModal();
-            location.reload();
-        }
-
-        function syncKnowledge() {
-            alert('IMA知识库同步成功！共同步 1,256 条知识记录。');
-        }
-
-        function filterOrders(status) {
-            document.querySelectorAll('#orders button').forEach(btn => {
-                btn.className = btn.className.replace(/bg-blue-600 text-white/g, 'text-gray-600 hover:bg-gray-100');
+            editingTemplateId=null;
+        }else{
+            templates.push({
+                id:Date.now(),
+                name:name,
+                category:document.getElementById('templateCategory').value,
+                trigger:document.getElementById('templateTrigger').value,
+                content:content,
+                enabled:document.getElementById('templateEnabled').checked
             });
-            event.target.className = 'px-4 py-2 bg-blue-600 text-white rounded-lg';
-            // In real app, filter orders by status
         }
 
-        document.addEventListener('DOMContentLoaded', function() {
-            const autoReplyEnabled = localStorage.getItem('autoReplyEnabled');
-            if (autoReplyEnabled !== null) {
-                document.getElementById('autoReplyEnabled').checked = autoReplyEnabled === 'true';
+        localStorage.setItem('autoTemplates',JSON.stringify(templates));
+        closeTemplateModal();
+        renderTemplates();
+    }
+
+    function editTemplate(id){
+        var t=templates.find(function(t){return t.id===id});
+        if(t){
+            editingTemplateId=id;
+            document.getElementById('templateName').value=t.name;
+            document.getElementById('templateCategory').value=t.category;
+            document.getElementById('templateTrigger').value=t.trigger;
+            document.getElementById('templateContent').value=t.content;
+            document.getElementById('templateEnabled').checked=t.enabled;
+            document.getElementById('templateModalTitle').textContent='编辑模板';
+            if(t.trigger==='keyword'){
+                document.getElementById('keywordInput').classList.remove('hidden');
+                document.getElementById('templateKeywords').value=(t.keywords||[]).join(',');
             }
+            openTemplateModal();
+        }
+    }
+
+    function deleteTemplate(id){
+        if(confirm('确定要删除此模板吗？')){
+            templates=templates.filter(function(t){return t.id!==id});
+            localStorage.setItem('autoTemplates',JSON.stringify(templates));
+            renderTemplates();
+        }
+    }
+
+    // ========== 知识库 ==========
+
+    function renderKnowledgeList(searchTerm){
+        searchTerm=(searchTerm||'').toLowerCase();
+        var categoryFilter=document.getElementById('knowledgeCategoryFilter').value;
+        var catLabels={attraction:'景点',hotel:'酒店',food:'美食',transport:'交通',policy:'政策'};
+        var catColors={attraction:'green',hotel:'purple',food:'orange',transport:'blue',policy:'red'};
+
+        var filtered=knowledgeItems.filter(function(item){
+            var matchSearch=!searchTerm||
+                (item.title&&item.title.toLowerCase().includes(searchTerm))||
+                (item.content&&item.content.toLowerCase().includes(searchTerm));
+            var matchCat=categoryFilter==='全部分类'||categoryFilter===(catLabels[item.category]||item.category);
+            return matchSearch&&matchCat;
         });
+
+        var container=document.getElementById('knowledgeList');
+        if(filtered.length===0){
+            container.innerHTML='<div class="p-8 text-center text-gray-500"><i class="fas fa-search text-3xl mb-2 block"></i><p>未找到相关知识条目</p></div>';
+        }else{
+            container.innerHTML=filtered.map(function(item){
+                var color=catColors[item.category]||'blue';
+                var tags=(item.tags||[]).map(function(tag){
+                    return '<span class="px-2 py-1 bg-blue-100 text-blue-600 rounded text-xs">'+sanitize(tag)+'</span>';
+                }).join(' ');
+                return '<div class="knowledge-item p-4">'+
+                    '<div class="flex items-start justify-between">'+
+                        '<div class="flex-1">'+
+                            '<div class="flex items-center flex-wrap gap-1 mb-2">'+
+                                '<span class="px-2 py-1 bg-'+color+'-100 text-'+color+'-600 rounded text-xs">'+(catLabels[item.category]||item.category)+'</span>'+
+                                tags+
+                            '</div>'+
+                            '<h4 class="font-semibold text-gray-800 mb-1">'+sanitize(item.title)+'</h4>'+
+                            '<p class="text-gray-600 text-sm">'+sanitize((item.content||'').substring(0,100))+(item.content&&item.content.length>100?'...':'')+'</p>'+
+                            '<div class="flex items-center space-x-4 mt-2 text-xs text-gray-500">'+
+                                '<span><i class="fas fa-search mr-1"></i>查询: '+(item.queryCount||0)+'次</span>'+
+                                '<span><i class="fas fa-clock mr-1"></i>更新: '+(item.updatedAt||'-')+'</span>'+
+                            '</div>'+
+                        '</div>'+
+                        '<div class="flex items-center space-x-2 ml-4 flex-shrink-0">'+
+                            '<button onclick="editKnowledge('+item.id+')" class="text-blue-500 hover:text-blue-700"><i class="fas fa-edit"></i></button>'+
+                            '<button onclick="deleteKnowledge('+item.id+')" class="text-red-500 hover:text-red-700"><i class="fas fa-trash"></i></button>'+
+                        '</div>'+
+                    '</div>'+
+                '</div>';
+            }).join('');
+        }
+
+        // 更新统计
+        document.getElementById('knowledgeTotalCount').textContent=knowledgeItems.length.toLocaleString();
+        document.getElementById('knowledgeEnabledCount').textContent=knowledgeItems.length.toLocaleString();
+        var totalQueries=knowledgeItems.reduce(function(sum,k){return sum+(k.queryCount||0)},0);
+        document.getElementById('knowledgeWeeklyQueries').textContent=totalQueries.toLocaleString();
+    }
+
+    function openKnowledgeModal(){
+        document.getElementById('knowledgeModal').classList.remove('hidden');
+    }
+
+    function closeKnowledgeModal(){
+        document.getElementById('knowledgeModal').classList.add('hidden');
+        document.getElementById('knowledgeTitle').value='';
+        document.getElementById('knowledgeCategory').value='attraction';
+        document.getElementById('knowledgeTags').value='';
+        document.getElementById('knowledgeContent').value='';
+        document.getElementById('knowledgeModalTitle').textContent='添加知识条目';
+        editingKnowledgeId=null;
+    }
+
+    function saveKnowledge(){
+        var title=sanitize(document.getElementById('knowledgeTitle').value.trim());
+        var content=sanitize(document.getElementById('knowledgeContent').value.trim());
+        if(!title||!content){
+            showToast('请填写标题和内容','error');
+            return;
+        }
+
+        var tagsRaw=sanitize(document.getElementById('knowledgeTags').value.trim());
+        var tags=tagsRaw?tagsRaw.split(/[,，]/).map(function(t){return t.trim()}).filter(Boolean):[];
+
+        if(editingKnowledgeId){
+            var idx=knowledgeItems.findIndex(function(k){return k.id===editingKnowledgeId});
+            if(idx!==-1){
+                knowledgeItems[idx].title=title;
+                knowledgeItems[idx].category=document.getElementById('knowledgeCategory').value;
+                knowledgeItems[idx].content=content;
+                knowledgeItems[idx].tags=tags;
+                knowledgeItems[idx].updatedAt=new Date().toISOString().split('T')[0];
+            }
+            editingKnowledgeId=null;
+        }else{
+            knowledgeItems.push({
+                id:Date.now(),
+                title:title,
+                category:document.getElementById('knowledgeCategory').value,
+                tags:tags,
+                content:content,
+                queryCount:0,
+                updatedAt:new Date().toISOString().split('T')[0]
+            });
+        }
+
+        localStorage.setItem('knowledgeItems',JSON.stringify(knowledgeItems));
+        closeKnowledgeModal();
+        renderKnowledgeList(document.getElementById('knowledgeSearch').value);
+        showToast('知识条目已保存');
+    }
+
+    function editKnowledge(id){
+        var item=knowledgeItems.find(function(k){return k.id===id});
+        if(item){
+            editingKnowledgeId=id;
+            document.getElementById('knowledgeTitle').value=item.title||'';
+            document.getElementById('knowledgeCategory').value=item.category||'attraction';
+            document.getElementById('knowledgeTags').value=(item.tags||[]).join(',');
+            document.getElementById('knowledgeContent').value=item.content||'';
+            document.getElementById('knowledgeModalTitle').textContent='编辑知识条目';
+            openKnowledgeModal();
+        }
+    }
+
+    function deleteKnowledge(id){
+        if(confirm('确定要删除此知识条目吗？')){
+            knowledgeItems=knowledgeItems.filter(function(k){return k.id!==id});
+            localStorage.setItem('knowledgeItems',JSON.stringify(knowledgeItems));
+            renderKnowledgeList(document.getElementById('knowledgeSearch').value);
+            showToast('知识条目已删除');
+        }
+    }
+
+    function syncKnowledge(){
+        var btn=document.getElementById('syncKnowledgeBtn');
+        btn.disabled=true;
+        btn.innerHTML='<i class="fas fa-spinner fa-spin mr-2"></i>同步中...';
+
+        setTimeout(function(){
+            var syncCount=Math.floor(Math.random()*500)+1000;
+            btn.disabled=false;
+            btn.innerHTML='<i class="fas fa-sync mr-2"></i>同步知识库';
+            showToast('知识库同步成功！共同步 '+syncCount.toLocaleString()+' 条知识记录');
+            var current=parseInt((document.getElementById('knowledgeWeeklyQueries').textContent||'0').replace(/,/g,''))||0;
+            document.getElementById('knowledgeWeeklyQueries').textContent=(current+syncCount).toLocaleString();
+        },2000);
+    }
+
+    // ========== 订单管理 ==========
+
+    function renderOrdersTable(){
+        var supplierOrders=safeGetJSON('supplier_orders',[]);
+        var typeColors={'机票':'blue','酒店':'purple','门票':'orange','包车':'green','度假':'red'};
+        var statusColors={'已完成':'green','待支付':'yellow','处理中':'blue','已取消':'red'};
+        var statusMap={pending:'待支付',processing:'处理中',completed:'已完成',cancelled:'已取消'};
+
+        var filtered=supplierOrders;
+        if(currentOrderFilter!=='all'){
+            var targetStatus=statusMap[currentOrderFilter]||'';
+            filtered=supplierOrders.filter(function(o){return o.status===targetStatus});
+        }
+
+        var tbody=document.getElementById('ordersTableBody');
+        if(filtered.length===0){
+            tbody.innerHTML='<tr><td colspan="8" class="p-8 text-center text-gray-500">暂无订单</td></tr>';
+            return;
+        }
+
+        tbody.innerHTML=filtered.map(function(order){
+            var tc=typeColors[order.type]||'blue';
+            var sc=statusColors[order.status]||'blue';
+            return '<tr class="border-b hover:bg-gray-50">'+
+                '<td class="p-4 font-mono text-sm">#'+sanitize(order.id)+'</td>'+
+                '<td class="p-4"><p class="font-semibold">'+sanitize(order.customer)+'</p><p class="text-xs text-gray-500">'+sanitize(order.phone)+'</p></td>'+
+                '<td class="p-4"><span class="px-2 py-1 bg-'+tc+'-100 text-'+tc+'-600 rounded text-sm">'+sanitize(order.type)+'</span></td>'+
+                '<td class="p-4 text-sm">'+sanitize(order.product)+'</td>'+
+                '<td class="p-4 font-bold">¥'+(order.amount||0).toLocaleString()+'</td>'+
+                '<td class="p-4"><span class="px-2 py-1 bg-'+sc+'-100 text-'+sc+'-600 rounded text-sm">'+sanitize(order.status)+'</span></td>'+
+                '<td class="p-4 text-sm text-gray-500">'+sanitize(order.date)+' '+sanitize(order.time)+'</td>'+
+                '<td class="p-4"><button onclick="viewOrderDetail(\''+order.id+'\')" class="text-blue-500 hover:text-blue-700"><i class="fas fa-eye"></i></button></td>'+
+            '</tr>';
+        }).join('');
+    }
+
+    function filterOrders(status,btn){
+        currentOrderFilter=status;
+        document.querySelectorAll('.order-filter-btn').forEach(function(b){
+            b.className='order-filter-btn px-4 py-2 text-gray-600 hover:bg-gray-100 rounded-lg';
+        });
+        btn.className='order-filter-btn px-4 py-2 bg-blue-600 text-white rounded-lg';
+        renderOrdersTable();
+    }
+
+    function viewOrderDetail(orderId){
+        var supplierOrders=safeGetJSON('supplier_orders',[]);
+        var order=supplierOrders.find(function(o){return o.id===orderId});
+        if(!order)return;
+
+        var html='<div class="grid grid-cols-2 gap-3 text-sm">'+
+            '<div class="text-gray-500">订单号</div><div class="font-mono">#'+sanitize(order.id)+'</div>'+
+            '<div class="text-gray-500">客户</div><div>'+sanitize(order.customer)+'</div>'+
+            '<div class="text-gray-500">电话</div><div>'+sanitize(order.phone)+'</div>'+
+            '<div class="text-gray-500">产品类型</div><div>'+sanitize(order.type)+'</div>'+
+            '<div class="text-gray-500">产品详情</div><div>'+sanitize(order.product)+'</div>'+
+            '<div class="text-gray-500">金额</div><div class="font-bold text-lg text-blue-600">¥'+(order.amount||0).toLocaleString()+'</div>'+
+            '<div class="text-gray-500">状态</div><div>'+sanitize(order.status)+'</div>'+
+            '<div class="text-gray-500">下单时间</div><div>'+sanitize(order.date)+' '+sanitize(order.time)+'</div>'+
+        '</div>';
+
+        document.getElementById('orderDetailContent').innerHTML=html;
+        document.getElementById('orderDetailModal').classList.remove('hidden');
+    }
+
+    function closeOrderDetailModal(){
+        document.getElementById('orderDetailModal').classList.add('hidden');
+    }
+
+    // ========== 数据统计 ==========
+
+    function renderAnalytics(){
+        var supplierOrders=safeGetJSON('supplier_orders',[]);
+
+        // 收入趋势 近7天
+        var labels=[];
+        var revenueData=[];
+        for(var i=6;i>=0;i--){
+            var d=new Date(Date.now()-i*24*60*60*1000);
+            var dateStr=d.toISOString().split('T')[0];
+            labels.push((d.getMonth()+1)+'/'+d.getDate());
+            var dayRevenue=supplierOrders
+                .filter(function(o){return o.date===dateStr})
+                .reduce(function(sum,o){return sum+(o.amount||0)},0);
+            revenueData.push(dayRevenue);
+        }
+
+        // 订单类型分布
+        var typeCounts={};
+        supplierOrders.forEach(function(o){
+            typeCounts[o.type]=(typeCounts[o.type]||0)+1;
+        });
+
+        if(supplierCharts.revenue)supplierCharts.revenue.destroy();
+        if(supplierCharts.order)supplierCharts.order.destroy();
+
+        var revenueCtx=document.getElementById('supplierRevenueChart');
+        if(revenueCtx){
+            supplierCharts.revenue=new Chart(revenueCtx.getContext('2d'),{
+                type:'line',
+                data:{
+                    labels:labels,
+                    datasets:[{
+                        label:'收入(元)',
+                        data:revenueData,
+                        borderColor:'#FF6B35',
+                        backgroundColor:'rgba(255,107,53,0.1)',
+                        tension:0.4,
+                        fill:true
+                    }]
+                },
+                options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}}}
+            });
+        }
+
+        var orderCtx=document.getElementById('supplierOrderChart');
+        if(orderCtx){
+            supplierCharts.order=new Chart(orderCtx.getContext('2d'),{
+                type:'doughnut',
+                data:{
+                    labels:Object.keys(typeCounts).length>0?Object.keys(typeCounts):['暂无数据'],
+                    datasets:[{
+                        data:Object.keys(typeCounts).length>0?Object.values(typeCounts):[1],
+                        backgroundColor:Object.keys(typeCounts).length>0?['#3B82F6','#8B5CF6','#F97316','#10B981','#EF4444']:['#E5E7EB']
+                    }]
+                },
+                options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{position:'bottom'}}}
+            });
+        }
+    }
+
+    // ========== 系统设置 ==========
+
+    function loadSettings(){
+        var settings=safeGetJSON('supplier_settings',null);
+        if(settings){
+            document.getElementById('settingsCompanyName').value=settings.companyName||'';
+            document.getElementById('settingsContact').value=settings.contact||'';
+            document.getElementById('settingsPhone').value=settings.phone||'';
+            document.getElementById('settingsEmail').value=settings.email||'';
+        }else{
+            var supplier=safeGetJSON('current_supplier',{});
+            document.getElementById('settingsCompanyName').value=supplier.supplier_name||'';
+            document.getElementById('settingsEmail').value=supplier.email||'';
+        }
+    }
+
+    function saveSettings(){
+        var settings={
+            companyName:sanitize(document.getElementById('settingsCompanyName').value.trim()),
+            contact:sanitize(document.getElementById('settingsContact').value.trim()),
+            phone:sanitize(document.getElementById('settingsPhone').value.trim()),
+            email:sanitize(document.getElementById('settingsEmail').value.trim())
+        };
+        localStorage.setItem('supplier_settings',JSON.stringify(settings));
+        showToast('设置已保存');
+    }
+
+    // ========== 页面初始化 ==========
+
+    document.addEventListener('DOMContentLoaded',function(){
+        // A1: 鉴权守卫
+        var currentSupplier=checkAuth();
+        if(!currentSupplier)return;
+
+        // A2: 侧边栏用户信息
+        initSupplierData(currentSupplier);
+
+        // A3: 自动回复开关状态
+        var autoReplyEnabled=localStorage.getItem('autoReplyEnabled');
+        if(autoReplyEnabled!==null){
+            document.getElementById('autoReplyEnabled').checked=autoReplyEnabled==='true';
+        }
+
+        // 加载模板数据
+        templates=safeGetJSON('autoTemplates',[
+            {id:1,name:'欢迎语',category:'common',trigger:'first',content:'亲爱的游客您好！感谢您选择我们的服务。我是您的专属旅游顾问，很高兴为您服务。请告诉我您的出行需求，我会为您推荐最佳方案！',enabled:true},
+            {id:2,name:'订单确认',category:'order',trigger:'keyword',keywords:['确认','支付'],content:'您的订单已确认！订单号：{order_id}，金额：{amount}。我们将在1小时内发送电子凭证到您的邮箱，请注意查收。如有任何问题，请随时联系客服。',enabled:true},
+            {id:3,name:'退款说明',category:'service',trigger:'keyword',keywords:['退款'],content:'您的退款申请已受理！退款将在1-7个工作日内原路返回至您的支付账户。具体到账时间根据支付渠道不同略有差异，感谢您的理解与支持。',enabled:false},
+            {id:4,name:'非工作时间',category:'consult',trigger:'time',content:'您好！感谢您的咨询。当前非工作时间，您的消息已记录，我们将在工作时间内（9:00-21:00）尽快回复您。如有紧急情况，请拨打客服热线：400-888-8888',enabled:true}
+        ]);
+        localStorage.setItem('autoTemplates',JSON.stringify(templates));
+
+        // 加载知识库数据
+        knowledgeItems=safeGetJSON('knowledgeItems',[
+            {id:1,title:'故宫博物院门票信息',category:'attraction',tags:['热门','景点'],content:'故宫门票分为大门票和钟表馆、珍宝馆等专题展馆。大门票旺季60元/淡季40元。珍宝馆10元，钟表馆10元。开放时间：08:30-17:00（16:10停止入馆），周一闭馆。建议游览时间3-4小时。',queryCount:1256,updatedAt:'2024-02-28'},
+            {id:2,title:'三亚亚特兰蒂斯酒店介绍',category:'hotel',tags:['酒店','度假'],content:'三亚亚特兰蒂斯是集度假酒店、娱乐、餐饮、购物、演艺、国际会展及海洋乐园于一体的综合性度假目的地。海景房均价3000+，水世界和水族馆对住客免费开放。',queryCount:856,updatedAt:'2024-02-25'},
+            {id:3,title:'成都必吃美食清单',category:'food',tags:['美食','推荐'],content:'成都美食推荐：小龙坎火锅、蜀大侠火锅、玉林串串香、降龙爪爪、廖记棒棒鸡、夫妻肺片、钟水饺、龙抄手等。建议去宽窄巷子和锦里品尝地道小吃。',queryCount:2156,updatedAt:'2024-03-01'},
+            {id:4,title:'普吉岛交通指南',category:'transport',tags:['交通','攻略'],content:'普吉岛交通方式：出租车（较贵）、突突车（短途）、双条车（固定路线）、租摩托车（需国际驾照）。建议下载Grab打车APP，价格透明。机场到芭东海滩约45分钟车程。',queryCount:689,updatedAt:'2024-02-20'},
+            {id:5,title:'出境旅游保险政策',category:'policy',tags:['保险','政策'],content:'出境旅游建议购买旅游意外险和医疗保险。申根国家必须购买保额不低于3万欧元的医疗保险。部分国家对中国游客免签或落地签，出发前请确认签证政策。',queryCount:432,updatedAt:'2024-02-15'}
+        ]);
+        localStorage.setItem('knowledgeItems',JSON.stringify(knowledgeItems));
+
+        // A11: 初始化订单数据
+        initOrders();
+
+        // 渲染各模块
+        renderDashboard();
+        renderTemplates();
+        renderKnowledgeList();
+        renderOrdersTable();
+        loadSettings();
+
+        // 触发条件联动
+        document.getElementById('templateTrigger').addEventListener('change',function(){
+            document.getElementById('keywordInput').classList.toggle('hidden',this.value!=='keyword');
+        });
+
+        // 知识库搜索
+        document.getElementById('knowledgeSearch').addEventListener('input',function(){
+            renderKnowledgeList(this.value);
+        });
+
+        // 知识库分类筛选
+        document.getElementById('knowledgeCategoryFilter').addEventListener('change',function(){
+            renderKnowledgeList(document.getElementById('knowledgeSearch').value);
+        });
+    });
     </script>
 
 <!-- 返回按钮 -->
